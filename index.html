@@ -2,14 +2,18 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- Meta balises cruciales pour le VRAI Plein Écran Mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <title>Console Tactique Opérationnelle</title>
     
     <!-- CSS Unifié -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-
-    <!-- Bibliothèque officielle Proj4js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
 
     <style>
@@ -22,75 +26,96 @@
             --btn-reset: #444;
         }
 
-        body, html { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #1c1c1e; overflow: hidden; }
+        body, html { 
+            margin: 0; padding: 0; height: 100%; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+            background-color: #1c1c1e; overflow: hidden; 
+        }
         
-        /* --- STYLE DU MENU D'ACCUEIL --- */
+        /* --- MENU D'ACCUEIL --- */
         #menu-accueil {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            gap: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; gap: 20px;
             background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
         }
         .menu-titre { color: #ffffff; font-size: 26px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .menu-btn {
             width: 320px; padding: 18px; font-size: 16px; font-weight: bold; color: white;
             border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-            transition: transform 0.2s, background-color 0.2s;
-            text-align: left; display: flex; align-items: center; gap: 15px;
+            transition: transform 0.2s; text-align: left; display: flex; align-items: center; gap: 15px;
         }
-        .menu-btn:hover { transform: scale(1.02); }
-        .btn-incendie { background-color: #d9534f; } .btn-incendie:hover { background-color: #c9302c; }
-        .btn-coord { background-color: #ea580c; } .btn-coord:hover { background-color: #c2410c; }
-        .btn-perim { background-color: #337ab7; } .btn-perim:hover { background-color: #286090; }
+        .menu-btn:active { transform: scale(0.98); }
+        .btn-incendie { background-color: #d9534f; }
+        .btn-coord { background-color: #ea580c; }
+        .btn-perim { background-color: #337ab7; }
 
-        /* --- CONTENEURS GENERAUX --- */
-        .app-container { display: none; height: 100vh; width: 100%; position: relative; }
-        .map-canvas { height: 100vh; width: 100%; background: #222; }
+        /* --- CONTENEURS DES ERANS APPLIS --- */
+        .app-container { 
+            display: none; 
+            height: 100vh; 
+            width: 100%; 
+            position: relative; 
+            box-sizing: border-box;
+        }
+        
+        /* La carte prend toute la hauteur moins l'espace du bouton menu du bas */
+        .map-canvas { 
+            height: calc(100vh - 65px); 
+            width: 100%; 
+            background: #222; 
+        }
 
-        /* --- EMPLACEMENT DU BOUTON MENU : BAS À DROITE --- */
+        /* --- LE BOUTON MENU DE RETOUR (FIXE ET ACCESSIBLE EN BAS) --- */
         .btn-retour {
-            position: absolute; bottom: 15px; right: 15px; z-index: 3000;
-            background: #222; color: white; border: 1px solid #444;
-            padding: 10px 16px; border-radius: 6px; font-weight: bold; font-size: 13px;
-            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-            text-transform: uppercase; letter-spacing: 0.5px;
+            position: absolute; 
+            bottom: 0; 
+            left: 0;
+            width: 100%; 
+            height: 65px; /* Hauteur confortable pour le pouce */
+            z-index: 5000; /* Reste toujours au-dessus des cartes */
+            background: #222222; 
+            color: white; 
+            border: none;
+            border-top: 1px solid #333;
+            font-weight: bold; 
+            font-size: 15px;
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: cubic-bezier(0, 0, 1, 1); /* Anti-collision encoche basse iPhone */
         }
-        .btn-retour:hover { background: #333; }
+        .btn-retour:active { background: #333333; }
 
-        /* --- PANNEAUX DE COMMANDES SPECIFIQUES --- */
+        /* --- PANNEAUX DE COMMANDES INTERNES --- */
         
         /* App 1 : CALSURFEU */
         #panel-feu {
             position: absolute; top: 15px; right: 15px; z-index: 1000;
-            background: var(--bg-color); padding: 15px; border-radius: 8px;
-            border: 1px solid #333; box-shadow: 0 4px 12px rgba(0,0,0,0.5); width: 280px; 
-            font-size: 14px; text-align: center; box-sizing: border-box;
+            background: var(--bg-color); padding: 12px; border-radius: 8px;
+            border: 1px solid #333; box-shadow: 0 4px 12px rgba(0,0,0,0.5); width: 260px; 
+            font-size: 14px; text-align: center;
         }
-        #feu-status { font-size: 0.75em; color: #999; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .feu-surface-container { 
-            display: flex; justify-content: center; align-items: baseline; 
-            gap: 15px; margin-bottom: 15px; width: 100%;
-        }
-        #feu-display-m2 { font-size: 1.8em; font-weight: bold; color: var(--accent-red); margin: 0; }
-        #feu-display-ha { font-size: 1.3em; font-weight: bold; color: var(--accent-orange); margin: 0; }
-        .feu-btn-group { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px; }
+        #feu-status { font-size: 0.75em; color: #999; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .feu-surface-container { display: flex; justify-content: center; align-items: baseline; gap: 15px; margin-bottom: 10px; }
+        #feu-display-m2 { font-size: 1.6em; font-weight: bold; color: var(--accent-red); margin: 0; }
+        #feu-display-ha { font-size: 1.2em; font-weight: bold; color: var(--accent-orange); margin: 0; }
+        .feu-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .feu-panel-btn {
-            padding: 12px 5px; font-size: 0.85em; border-radius: 8px; border: none;
+            padding: 10px 5px; font-size: 0.85em; border-radius: 6px; border: none;
             font-weight: bold; text-transform: uppercase; color: white; cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4); transition: transform 0.1s;
         }
-        .feu-panel-btn:active { transform: scale(0.96); opacity: 0.9; }
         .feu-start { background: var(--btn-start); }
         .feu-stop { background: var(--btn-stop); }
         .feu-reset { background: var(--btn-reset); }
         
         /* App 2 : LAMBERTMAPS */
         #container-coord {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; background-color: #1e293b; padding: 10px; box-sizing: border-box;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            height: calc(100vh - 65px); background-color: #1e293b; padding: 20px 10px; box-sizing: border-box;
+            overflow-y: auto;
         }
         .panel-coord-pure {
             background: #0f172a; padding: 20px; border-radius: 8px;
@@ -100,47 +125,40 @@
             color: #38bdf8; margin-top: 0; text-align: center; font-size: 1.2rem;
             text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 10px;
         }
-        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group { margin-bottom: 15px; }
         .input-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #94a3b8; font-size: 0.85rem; }
         .panel-coord-pure input {
             width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 4px;
             box-sizing: border-box; font-size: 16px; background-color: #1e293b; color: #fff;
         }
         .result-box {
-            background-color: #1e293b; border: 1px dashed #22c55e; border-radius: 4px;
-            padding: 12px; margin-top: 15px; margin-bottom: 15px; text-align: center;
+            background-color: #1e293b; border: 1px dashed #22c55e; border-radius: 4px; padding: 12px; margin: 15px 0; text-align: center;
         }
         .result-title { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
         .result-values { font-family: monospace; font-size: 1.1rem; color: #22c55e; font-weight: bold; }
-        
         .panel-coord-pure button {
             width: 100%; padding: 14px; color: white; border: none; border-radius: 4px;
-            font-size: 14px; cursor: pointer; font-weight: bold; text-transform: uppercase;
-            margin-top: 10px; transition: background-color 0.2s;
+            font-size: 14px; cursor: pointer; font-weight: bold; text-transform: uppercase; margin-top: 5px;
         }
-        .btn-convert { background-color: #ea580c; } .btn-convert:active { background-color: #c2410c; }
-        .btn-maps { background-color: #16a34a; display: none; } .btn-maps:active { background-color: #15803d; }
+        .btn-convert { background-color: #ea580c; }
+        .btn-maps { background-color: #16a34a; display: none; margin-top: 10px !important; }
 
         /* App 3 : PERISECU */
         #panel-perim {
-            position: absolute; top: 15px; left: 15px; z-index: 1000;
-            background: rgba(255, 255, 255, 0.98); padding: 10px 15px; border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 8px; width: 340px;
+            position: absolute; top: 15px; left: 5%; right: 5%; z-index: 1000;
+            background: rgba(255, 255, 255, 0.98); padding: 10px 12px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 8px; width: 90%; box-sizing: border-box;
         }
         .ligne-1 { display: flex; gap: 4px; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 6px; }
         .ligne-2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .section-data { display: flex; gap: 10px; font-size: 13px; }
-        .data-item { white-space: nowrap; }
-        
+        .section-data { display: flex; gap: 8px; font-size: 12px; }
         .label { color: #555; font-weight: 500; }
         .valeur { font-weight: bold; color: #d9534f; }
-        .dist-btn { flex: 1; padding: 6px 0; background: #f1f1f1; color: #333; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; text-align: center; }
-        .dist-btn:hover { background: #e0e0e0; }
-        .main-btn { padding: 5px 8px; cursor: pointer; background: #337ab7; color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; white-space: nowrap; }
-        .main-btn:hover { background: #286090; }
-        .debug-lbl { font-size: 11px; color: #337ab7; font-weight: bold; white-space: nowrap; text-align: right; }
+        .dist-btn { flex: 1; padding: 8px 0; background: #f1f1f1; color: #333; border: 1px solid #ccc; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; text-align: center; }
+        .main-btn { padding: 6px 10px; cursor: pointer; background: #337ab7; color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .debug-lbl { font-size: 11px; color: #337ab7; font-weight: bold; }
 
-        .leaflet-bottom.leaflet-left .leaflet-control-zoom { margin-bottom: 5px; }
+        .leaflet-bottom.leaflet-left .leaflet-control-zoom { margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -152,7 +170,6 @@
         <button class="menu-btn btn-coord" onclick="ouvrirApp('app-coord')">🌐 LAMBERTMAPS</button>
         <button class="menu-btn btn-perim" onclick="ouvrirApp('app-perim')">⭕ PERISECU</button>
     </div>
-
 
     <!-- ================= APPLI 1 : CALSURFEU ================= -->
     <div id="app-feu" class="app-container">
@@ -168,9 +185,8 @@
                 <button id="feu-btnReset" class="feu-panel-btn feu-reset" onclick="effacerTracageFeu()">Effacer</button>
             </div>
         </div>
-        <button class="btn-retour" onclick="reinitialiserEtRetour()">Menu ➡️</button>
+        <button class="btn-retour" onclick="reinitialiserEtRetour()">⬅️ Retour Menu</button>
     </div>
-
 
     <!-- ================= APPLI 2 : LAMBERTMAPS ================= -->
     <div id="app-coord" class="app-container">
@@ -179,13 +195,13 @@
                 <h2>Calculateur Ops</h2>
                 <div class="input-group">
                     <label for="coordX">Coordonnée X (Lambert II)</label>
-                    <input type="number" id="coordX" step="0.1" placeholder="Ex: 397473.8" value="397473.8">
+                    <input type="number" id="coordX" step="0.1" value="397473.8">
                 </div>
                 <div class="input-group">
                     <label for="coordY">Coordonnée Y (Lambert II)</label>
-                    <input type="number" id="coordY" step="0.1" placeholder="Ex: 1994596.0" value="1994596.0">
+                    <input type="number" id="coordY" step="0.1" value="1994596.0">
                 </div>
-                <button class="btn-convert" onclick="executerConversion()">1. Convertir en Lambert II Étendu</button>
+                <button class="btn-convert" onclick="executerConversion()">1. Convertir en Lambert II</button>
                 <div id="zoneResultat" style="display: none;">
                     <div class="result-box">
                         <div class="result-title">Coordonnées GPS (WGS84)</div>
@@ -195,9 +211,8 @@
                 </div>
             </div>
         </div>
-        <button class="btn-retour" onclick="retourAccueil()">Menu ➡️</button>
+        <button class="btn-retour" onclick="retourAccueil()">⬅️ Retour Menu</button>
     </div>
-
 
     <!-- ================= APPLI 3 : PERISECU ================= -->
     <div id="app-perim" class="app-container">
@@ -212,39 +227,30 @@
             </div>
             <div class="ligne-2">
                 <div class="section-data">
-                    <div class="data-item"><span class="label">Forme:</span> <span id="perim-type" class="valeur">-</span></div>
-                    <div class="data-item"><span class="label">Péri:</span> <span id="perim-perim" class="valeur">-</span></div>
-                    <div class="data-item"><span class="label">Surf:</span> <span id="perim-surf" class="valeur">-</span></div>
+                    <div><span class="label">Péri:</span> <span id="perim-perim" class="valeur">-</span></div>
+                    <div><span class="label">Surf:</span> <span id="perim-surf" class="valeur">-</span></div>
                 </div>
                 <button class="main-btn" onclick="declencherGpsPerim()">📍 Recentrer</button>
-                <div id="perim-debug" class="debug-lbl">Recherche GPS...</div>
+                <div id="perim-debug" class="debug-lbl">GPS...</div>
             </div>
         </div>
-        <button class="btn-retour" onclick="retourAccueil()">Menu ➡️</button>
+        <button class="btn-retour" onclick="retourAccueil()">⬅️ Retour Menu</button>
     </div>
-
 
     <!-- Scripts Cartographiques Globaux -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.1.0/src/leaflet.geometryutil.min.js"></script>
 
-    <!-- Moteur d'Aiguillage In-App -->
+    <!-- Script Logique -->
     <script>
         function ouvrirApp(idApp) {
             document.getElementById('menu-accueil').style.display = 'none';
             document.getElementById(idApp).style.display = 'block';
-            
-            // Forcer le rendu propre des cartes après affichage du conteneur HTML
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 150);
 
-            // Ne lancer le traçage actif que si l'utilisateur ouvre CALSURFEU
-            if (idApp === 'app-feu') {
-                activerGpsFeu();
-            }
-            if (idApp === 'app-perim') {
-                declencherGpsPerim();
-            }
+            if (idApp === 'app-feu') activerGpsFeu();
+            if (idApp === 'app-perim') declencherGpsPerim();
         }
 
         function retourAccueil() {
@@ -252,10 +258,8 @@
             document.getElementById('app-feu').style.display = 'none';
             document.getElementById('app-coord').style.display = 'none';
             document.getElementById('app-perim').style.display = 'none';
-            
             document.getElementById('zoneResultat').style.display = 'none';
             document.getElementById('btnMaps').style.display = 'none';
-            
             document.getElementById('menu-accueil').style.display = 'flex';
         }
 
@@ -263,14 +267,11 @@
             effacerTracageFeu();
             retourAccueil();
         }
-    </script>
 
-    <!-- Logique Métier (JavaScript) -->
-    <script>
         const tuilesSatelliteUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
         const attributionEsri = 'Esri';
 
-        // ================= LOGIQUE APPLI 1 : CALSURFEU (MOTEUR GPS SÉCURISÉ) =================
+        // --- CALSURFEU ---
         const mapFeu = L.map('map-feu', { zoomControl: false }).setView([46.2, 2.2], 5);
         L.control.zoom({ position: 'bottomleft' }).addTo(mapFeu);
         L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapFeu);
@@ -279,18 +280,13 @@
         let polylineFeu = L.polyline([], {color: 'yellow', weight: 4}).addTo(mapFeu);
         let polygonFeu = L.polygon([], {color: 'red', fillOpacity: 0.3, weight: 2}).addTo(mapFeu);
         let markerFeu = L.circleMarker([0,0], {radius: 8, color: 'white', fillColor: '#2196F3', fillOpacity: 1, weight: 2}).addTo(mapFeu);
-        
-        let isTracingFeu = false;
-        let lastCoordsFeu = null;
-        let watchIdFeu = null;
+        let isTracingFeu = false, lastCoordsFeu = null, watchIdFeu = null;
 
         function getAreaFeu(nodes) {
             if (nodes.length < 3) return 0;
-            let area = 0;
-            const R = 6378137;
+            let area = 0; const R = 6378137;
             for (let i = 0; i < nodes.length; i++) {
-                let p1 = nodes[i];
-                let p2 = nodes[(i + 1) % nodes.length];
+                let p1 = nodes[i], p2 = nodes[(i + 1) % nodes.length];
                 area += (p2.lng - p1.lng) * Math.PI / 180 * (2 + Math.sin(p1.lat * Math.PI / 180) + Math.sin(p2.lat * Math.PI / 180));
             }
             return Math.abs(area * R * R / 2);
@@ -298,66 +294,33 @@
 
         function activerGpsFeu() {
             if (watchIdFeu) return; 
-            
-            if (!navigator.geolocation) {
-                document.getElementById('feu-status').textContent = "GPS non supporté";
-                return;
-            }
-            
+            if (!navigator.geolocation) { document.getElementById('feu-status').textContent = "GPS non supporté"; return; }
             watchIdFeu = navigator.geolocation.watchPosition(function(pos) {
                 lastCoordsFeu = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 markerFeu.setLatLng([lastCoordsFeu.lat, lastCoordsFeu.lng]);
                 document.getElementById('feu-status').textContent = "GPS OK - Précision: " + Math.round(pos.coords.accuracy) + "m";
-                
                 if (isTracingFeu) {
                     pathFeu.push(lastCoordsFeu);
                     polylineFeu.setLatLngs(pathFeu.map(p => [p.lat, p.lng]));
                     mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 18);
-                } else {
-                    if (pathFeu.length === 0) mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 17);
+                } else if (pathFeu.length === 0) {
+                    mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 17);
                 }
             }, function(err) {
-                switch(err.code) {
-                    case err.PERMISSION_DENIED:
-                        document.getElementById('feu-status').textContent = "Erreur: Activer GPS Navigateur";
-                        break;
-                    case err.POSITION_UNAVAILABLE:
-                        document.getElementById('feu-status').textContent = "Signal GPS Indisponible";
-                        break;
-                    case err.TIMEOUT:
-                        document.getElementById('feu-status').textContent = "Délai d'attente GPS dépassé";
-                        break;
-                    default:
-                        document.getElementById('feu-status').textContent = "Erreur de signal GPS";
-                }
-            }, {
-                enableHighAccuracy: true,
-                maximumAge: 0,
-                timeout: 5000
-            });
+                document.getElementById('feu-status').textContent = "Signal GPS Indisponible";
+            }, { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
         }
 
-        function desactiverGpsFeu() {
-            if (watchIdFeu) {
-                navigator.geolocation.clearWatch(watchIdFeu);
-                watchIdFeu = null;
-            }
-        }
+        function desactiverGpsFeu() { if (watchIdFeu) { navigator.geolocation.clearWatch(watchIdFeu); watchIdFeu = null; } }
 
         function gererTracageFeu() {
             const btnAction = document.getElementById('feu-btnAction');
             if (!isTracingFeu) {
-                pathFeu = [];
-                polylineFeu.setLatLngs([]);
-                polygonFeu.setLatLngs([]);
-                isTracingFeu = true;
-                btnAction.textContent = "Arrêter";
-                btnAction.className = "feu-panel-btn feu-stop";
+                pathFeu = []; polylineFeu.setLatLngs([]); polygonFeu.setLatLngs([]);
+                isTracingFeu = true; btnAction.textContent = "Arrêter"; btnAction.className = "feu-panel-btn feu-stop";
                 document.getElementById('feu-status').textContent = "Tracé en cours...";
             } else {
-                isTracingFeu = false;
-                btnAction.textContent = "Démarrer";
-                btnAction.className = "feu-panel-btn feu-start";
+                isTracingFeu = false; btnAction.textContent = "Démarrer"; btnAction.className = "feu-panel-btn feu-start";
                 if (pathFeu.length > 2) {
                     polygonFeu.setLatLngs(pathFeu.map(p => [p.lat, p.lng]));
                     let area = getAreaFeu(pathFeu);
@@ -365,86 +328,53 @@
                     document.getElementById('feu-display-ha').textContent = (area / 10000).toFixed(2) + " ha";
                     mapFeu.fitBounds(polygonFeu.getBounds());
                     document.getElementById('feu-status').textContent = "Calcul terminé";
-                } else {
-                    document.getElementById('feu-status').textContent = "Points insuffisants";
                 }
             }
         }
 
         function effacerTracageFeu() {
-            pathFeu = [];
-            polylineFeu.setLatLngs([]);
-            polygonFeu.setLatLngs([]);
-            isTracingFeu = false;
-            
-            const btnAction = document.getElementById('feu-btnAction');
-            btnAction.textContent = "Démarrer";
-            btnAction.className = "feu-panel-btn feu-start";
-            
+            pathFeu = []; polylineFeu.setLatLngs([]); polygonFeu.setLatLngs([]); isTracingFeu = false;
+            document.getElementById('feu-btnAction').textContent = "Démarrer";
+            document.getElementById('feu-btnAction').className = "feu-panel-btn feu-start";
             document.getElementById('feu-display-m2').textContent = "0 m²";
             document.getElementById('feu-display-ha').textContent = "0.00 ha";
             document.getElementById('feu-status').textContent = "Prêt";
-            
-            if (lastCoordsFeu) {
-                mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 17);
-            }
+            if (lastCoordsFeu) mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 17);
         }
 
-
-        // ================= LOGIQUE APPLI 2 : LAMBERTMAPS =================
-        let globalLat = null;
-        let globalLng = null;
-
+        // --- LAMBERTMAPS ---
+        let globalLat = null, globalLng = null;
         const lambert2Etendu = "+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356515 +towgs84=-168,-60,320,0,0,0,0 +pm=paris +units=m +no_defs";
         const wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
 
         function executerConversion() {
             const x = parseFloat(document.getElementById('coordX').value);
             const y = parseFloat(document.getElementById('coordY').value);
-            
-            if (isNaN(x) || isNaN(y)) {
-                alert("Veuillez saisir des coordonnées valides.");
-                return;
-            }
-            
+            if (isNaN(x) || isNaN(y)) return;
             try {
                 const conversion = proj4(lambert2Etendu, wgs84, [x, y]);
-                globalLng = conversion[0].toFixed(5);
-                globalLat = conversion[1].toFixed(5);
-                
+                globalLng = conversion[0].toFixed(5); globalLat = conversion[1].toFixed(5);
                 document.getElementById('gpsDisplay').innerText = `${globalLat} , ${globalLng}`;
                 document.getElementById('zoneResultat').style.display = 'block';
                 document.getElementById('btnMaps').style.display = 'block';
-            } catch (error) {
-                alert("Erreur de calcul : " + error.message);
-            }
+            } catch (e) { alert("Erreur"); }
         }
+        function ouvrirGoogleMaps() { if (globalLat && globalLng) window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${globalLat},${globalLng}`; }
 
-        function ouvrirGoogleMaps() {
-            if (!globalLat || !globalLng) return;
-            window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${globalLat},${globalLng}`;
-        }
-
-
-        // ================= LOGIQUE APPLI 3 : PERISECU =================
+        // --- PERISECU ---
         const mapPerim = L.map('map-perim', { zoomControl: false }).setView([46.2, 2.2], 5);
         let coordonnesCentrePerim = mapPerim.getCenter();
-        
         L.control.zoom({ position: 'bottomleft' }).addTo(mapPerim);
         L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapPerim);
         
         const drawnItemsPerim = new L.FeatureGroup().addTo(mapPerim);
         const drawControlPerim = new L.Control.Draw({
             position: 'bottomleft',
-            edit: { featureGroup: drawnItemsPerim },
-            draw: { polyline: false, rectangle: false, marker: false, circlemarker: false, polygon: { shapeOptions: { color: '#d9534f', weight: 3, fillOpacity: 0.3 } }, circle: { shapeOptions: { color: '#d9534f', weight: 3, fillOpacity: 0.3 } } }
+            draw: { polyline: false, rectangle: false, marker: false, circlemarker: false, polygon: { shapeOptions: { color: '#d9534f', weight: 3 } }, circle: { shapeOptions: { color: '#d9534f', weight: 3 } } }
         });
         mapPerim.addControl(drawControlPerim);
 
-        mapPerim.on(L.Draw.Event.CREATED, (e) => {
-            drawnItemsPerim.clearLayers().addLayer(e.layer);
-            calculerPerim(e.layer, e.layerType);
-        });
+        mapPerim.on(L.Draw.Event.CREATED, (e) => { drawnItemsPerim.clearLayers().addLayer(e.layer); calculerPerim(e.layer, e.layerType); });
 
         function tracerRayonFixe(metres) {
             drawnItemsPerim.clearLayers();
@@ -454,38 +384,18 @@
         }
 
         function calculerPerim(layer, type) {
-            let p = 0, s = 0, typeTexte = "Polygone";
-            if (type === 'circle') {
-                const r = layer.getRadius(); p = 2 * Math.PI * r; s = Math.PI * r * r; typeTexte = "Cercle " + r.toFixed(0) + "m";
-            } else {
-                const latlngs = layer.getLatLngs()[0]; s = L.GeometryUtil.geodesicArea(latlngs);
-                for (let i = 0; i < latlngs.length; i++) { p += latlngs[i].distanceTo(latlngs[(i + 1) % latlngs.length]); }
-            }
-            document.getElementById('perim-type').innerText = typeTexte;
+            let p = 0, s = 0;
+            if (type === 'circle') { const r = layer.getRadius(); p = 2 * Math.PI * r; s = Math.PI * r * r; } 
+            else { const latlngs = layer.getLatLngs()[0]; s = L.GeometryUtil.geodesicArea(latlngs); for (let i = 0; i < latlngs.length; i++) { p += latlngs[i].distanceTo(latlngs[(i + 1) % latlngs.length]); } }
             document.getElementById('perim-perim').innerText = p > 1000 ? (p/1000).toFixed(1) + 'km' : p.toFixed(0) + 'm';
             document.getElementById('perim-surf').innerText = s > 10000 ? (s/10000).toFixed(1) + 'ha' : s.toFixed(0) + 'm²';
         }
 
         let gpsMarqueur = null;
-        function declencherGpsPerim() {
-            document.getElementById('perim-debug').style.color = "#337ab7";
-            document.getElementById('perim-debug').innerText = "Recherche GPS...";
-            mapPerim.locate({ setView: true, maxZoom: 17, enableHighAccuracy: true, timeout: 10000 });
-        }
-
-        mapPerim.on('locationfound', function(e) {
-            document.getElementById('perim-debug').style.color = "#5cb85c"; document.getElementById('perim-debug').innerText = "GPS OK";
-            coordonnesCentrePerim = e.latlng;
-            if (gpsMarqueur) { gpsMarqueur.setLatLng(e.latlng); } 
-            else { gpsMarqueur = L.marker(e.latlng).addTo(mapPerim).bindPopup("<b>Votre position</b>").openPopup(); }
-        });
-
-        mapPerim.on('locationerror', function() {
-            document.getElementById('perim-debug').style.color = "#d9534f"; document.getElementById('perim-debug').innerText = "GPS OFF";
-            coordonnesCentrePerim = mapPerim.getCenter();
-        });
-
-        mapPerim.on('moveend', function() { if (!gpsMarqueur) { coordonnesCentrePerim = mapPerim.getCenter(); } });
+        function declencherGpsPerim() { mapPerim.locate({ setView: true, maxZoom: 17, enableHighAccuracy: true }); }
+        mapPerim.on('locationfound', function(e) { document.getElementById('perim-debug').innerText = "GPS OK"; coordonnesCentrePerim = e.latlng; if (gpsMarqueur) { gpsMarqueur.setLatLng(e.latlng); } else { gpsMarqueur = L.marker(e.latlng).addTo(mapPerim); } });
+        mapPerim.on('locationerror', function() { document.getElementById('perim-debug').innerText = "GPS ERR"; coordonnesCentrePerim = mapPerim.getCenter(); });
+        mapPerim.on('moveend', function() { if (!gpsMarqueur) coordonnesCentrePerim = mapPerim.getCenter(); });
     </script>
 </body>
 </html>
