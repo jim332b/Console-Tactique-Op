@@ -693,4 +693,12 @@
             layerGroupPdfDec.clearLayers();
             regleGroupPdfDec.clearLayers();
             if (currentPlanPdfLayer) { mapPdfDec.removeLayer(currentPlanPdfLayer); currentPlanPdfLayer = null; }
-            document
+            document.getElementById('resultat-mesure').innerText = "Double-cliquez pour poser les périmètres";
+            pointsMesure = [];
+            modeRegleActive = false;
+            document.getElementById('btn-regle').style.background = '#0284c7';
+            document.getElementById('btn-regle').innerText = "📏 Activer";
+        }
+    </script>
+</body>
+</html>
