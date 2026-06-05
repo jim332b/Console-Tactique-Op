@@ -192,19 +192,19 @@
         }
         .legende-item { display: flex; align-items: center; justify-content: space-between; padding: 2px 5px; border-radius: 3px; color: black; }
 
-        /* STYLE PERSO POUR LES LABELS DE DISTANCES DES CERCLES */
+        /* ÉTIQUETTES DE DISTANCE AUX POINTS CARDINAUX */
         .cercle-distance-label {
-            background: rgba(15, 23, 42, 0.85) !important;
-            border: 1px solid #475569 !important;
+            background: rgba(15, 23, 42, 0.9) !important;
+            border: none !important;
             color: #ffffff !important;
             font-weight: bold !important;
             font-size: 11px !important;
-            padding: 2px 6px !important;
-            border-radius: 4px !important;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            padding: 1px 5px !important;
+            border-radius: 3px !important;
             white-space: nowrap;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.5);
         }
-        /* Masque la petite flèche blanche par défaut de Leaflet pour plus de propreté */
         .cercle-distance-label::before { display: none !important; }
 
         .leaflet-bottom.leaflet-left .leaflet-control-zoom { margin-bottom: 10px; }
@@ -611,27 +611,26 @@
             }
         });
 
-        // Tracé des cercles réglementaires concentriques PERIDECI AVEC TEXTE DISTANCE AFFICHÉ
+        // Tracé des cercles PERIDECI avec distances aux 4 points cardinaux (N, S, E, O)
         mapPdfDec.on('dblclick', function(e) {
             if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer || modeRegleActive) return;
 
             layerGroupPdfDec.clearLayers();
             const pointCentral = e.latlng;
 
-            // Ajout du libellé texte directement lié à chaque configuration
             const configurations = [
                 { rayon: 200, couleur: '#ff5252', texte: "200 m" },
                 { rayon: 400, couleur: '#ffab40', texte: "400 m" },
                 { rayon: 1000, couleur: '#ffd740', texte: "1 km" },
-                { rayon: 2000, couleur: '#29b6f6', texte: "2 km (DFCI)" },
+                { rayon: 2000, couleur: '#29b6f6', texte: "2 km" },
                 { rayon: 4000, couleur: '#66bb6a', texte: "4 km" }
             ];
 
             configurations.forEach(config => {
                 const rayonUnites = metreEnUnites(config.rayon);
                 
-                // 1. Dessiner le cercle opérationnel
-                const cercle = L.circle(pointCentral, {
+                // 1. Tracé du cercle opérationnel principal
+                L.circle(pointCentral, {
                     radius: rayonUnites,
                     color: config.couleur,
                     weight: 3,
@@ -640,18 +639,27 @@
                     dashArray: '5, 5'
                 }).addTo(layerGroupPdfDec);
 
-                // 2. Calculer l'emplacement du texte (au sommet Nord exact du cercle pour ne pas surcharger le centre)
-                const positionTexte = [pointCentral.lat + rayonUnites, pointCentral.lng];
+                // 2. Définition des coordonnées géométriques des 4 points cardinaux
+                const pointsCardinaux = [
+                    { latlng: [pointCentral.lat + rayonUnites, pointCentral.lng] }, // Nord
+                    { latlng: [pointCentral.lat - rayonUnites, pointCentral.lng] }, // Sud
+                    { latlng: [pointCentral.lat, pointCentral.lng + rayonUnites] }, // Est
+                    { latlng: [pointCentral.lat, pointCentral.lng - rayonUnites] }  // Ouest
+                ];
 
-                // 3. Attacher le Tooltip persistant et visible directement sur la carte
-                cercle.bindTooltip(config.texte, {
-                    permanent: true,                  // Reste affiché en continu sans clic ni survol
-                    direction: 'top',                 // Positionné juste au-dessus du point haut du cercle
-                    className: 'cercle-distance-label' // Classe CSS customisée pour le design sombre
-                }).openTooltip();
+                // 3. Implantation des étiquettes masquées sur les lignes
+                pointsCardinaux.forEach(pt => {
+                    L.marker(pt.latlng, { opacity: 0 })
+                        .addTo(layerGroupPdfDec)
+                        .bindTooltip(config.texte, {
+                            permanent: true,
+                            direction: 'center', // Fixe l'étiquette parfaitement alignée sur l'axe du trait
+                            className: 'cercle-distance-label'
+                        }).openTooltip();
+                });
             });
 
-            // Point de repère central
+            // Point central (Épicentre du quadrillage)
             L.circleMarker(pointCentral, { radius: 5, color: '#fff', fillColor: '#000', fillOpacity: 1, weight: 2 }).addTo(layerGroupPdfDec);
         });
 
