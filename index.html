@@ -7,8 +7,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Console Tactique Intégrée - SDIS 33</title>
     
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
     <style>
         body, html { margin: 0; padding: 0; height: 100%; background-color: #121212; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; overflow: hidden; }
         #map { height: 100vh; width: 100%; background: #121212; }
@@ -42,74 +43,88 @@
         .btn-purple { background: #8b5cf6; }
         .btn-toggle { background: #374151; border: 1px solid #4b5563; }
         
-        .input-ui { background: #333; border: 1px solid #555; color: white; padding: 6px; border-radius: 3px; font-weight: bold; font-size: 11px; width: 90px; text-align: center; }
+        .select-ui, .input-ui { background: #333; border: 1px solid #555; color: white; padding: 6px; border-radius: 3px; font-weight: bold; font-size: 11px; text-align: center; }
+        
+        /* RECTANGLES DE SAISIE ALLONGÉS POUR LAMBERTMAPS */
+        .input-lambert { width: 140px; font-size: 12px; letter-spacing: 0.5px; }
+        
         .info-txt { font-weight: bold; color: #38bdf8; font-size: 11px; }
 
-        /* LÉGENDES OPÉRATIONNELLES FLOTTANTES */
+        /* LÉGENDES OPÉRATIONNELLES FLOTTANTES (PERSISTANTES SUR PLEIN ÉCRAN) */
         .legende-flottante {
             position: absolute; bottom: 15px; right: 15px; z-index: 1005;
             background: rgba(20, 20, 20, 0.95); padding: 8px 12px; border-radius: 6px; border: 1px solid #444;
             display: none; flex-direction: column; gap: 4px; width: 90px; font-size: 10px; font-weight: bold;
         }
         .legende-item { display: flex; align-items: center; justify-content: space-between; padding: 2px 5px; border-radius: 3px; color: black; }
+        #file-input { display: none; }
     </style>
 </head>
 <body>
 
     <div id="map"></div>
 
-    <!-- UTILIATAIRE DE VISIBILITÉ PLEIN ÉCRAN -->
     <div style="position: absolute; top: 14px; right: 15px; z-index: 1020;">
         <button class="btn-action btn-toggle" onclick="basculerPleinEcran()" id="btn-masquer">👁️ Masquer les outils</button>
     </div>
 
-    <!-- ONGLETS DE SÉLECTION DE L'APPLICATION -->
     <div id="nav-tabs">
         <button class="tab-btn active" onclick="switchApp('PERISECU', this)">⚠️ PERISECU</button>
         <button class="tab-btn" onclick="switchApp('CALSURFEU', this)">🔥 CALSURFEU</button>
         <button class="tab-btn" onclick="switchApp('LAMBERTMAPS', this)">🌐 LAMBERTMAPS</button>
-        <button class="tab-btn" onclick="switchApp('PERIDECI', this)">🚒 PERIDECI</button>
+        <button class="tab-btn" onclick="switchApp('DECIANALYSE', this)">💧 DECIANALYSE</button>
+        <button class="tab-btn" onclick="switchApp('PERIMETRE-DECI', this)"> Plan fixe</button>
     </div>
 
-    <!-- PANNEAU 1 : PERISECU -->
     <div id="panel-PERISECU" class="control-panel active">
         <div class="flex-group">
-            <button class="btn-action btn-green" onclick="declencherGps()">📍 Centre sur ma position (GPS)</button>
+            <button class="btn-action btn-green" onclick="declencherGps()">📍 Centre Position (GPS)</button>
             <button class="btn-action btn-red" onclick="nettoyerCouche('PERISECU')">❌ Effacer</button>
         </div>
-        <div class="info-txt">Double-cliquez sur la carte pour poser les cercles de sécurité réglementaires.</div>
+        <div class="info-txt">Mode Terrain : Double-cliquez pour poser les périmètres de sécurité.</div>
     </div>
 
-    <!-- PANNEAU 2 : CALSURFEU -->
     <div id="panel-CALSURFEU" class="control-panel">
         <div class="flex-group">
-            <button class="btn-action btn-purple" onclick="activerDessinPolygone()">✏️ Tracer le contour du feu</button>
+            <button class="btn-action btn-purple" onclick="activerDessinPolygone()">✏️ Tracer le contour</button>
             <button class="btn-action btn-red" onclick="nettoyerCouche('CALSURFEU')">❌ Effacer tracé</button>
         </div>
         <div id="calcul-surface" class="info-txt">Surface estimée : 0.00 ha</div>
     </div>
 
-    <!-- PANNEAU 3 : LAMBERTMAPS -->
     <div id="panel-LAMBERTMAPS" class="control-panel">
         <div class="flex-group">
-            <input type="number" id="lambert-x" class="input-ui" placeholder="X (Lambert II)">
-            <input type="number" id="lambert-y" class="input-ui" placeholder="Y (Lambert II)">
+            <input type="number" id="lambert-x" class="input-ui input-lambert" placeholder="Coordonnée X (Ex: 565400)">
+            <input type="number" id="lambert-y" class="input-ui input-lambert" placeholder="Coordonnée Y (Ex: 2243100)">
             <button class="btn-action btn-blue" onclick="convertirEtProjeterLambert()">🗺️ Projeter</button>
         </div>
-        <div id="Statut-lambert" class="info-txt">Entrez les coordonnées Lambert II Étendu (Libournais/Gironde).</div>
+        <div id="Statut-lambert" class="info-txt">Saisir coordonnées Lambert II Étendu (Gironde).</div>
     </div>
 
-    <!-- PANNEAU 4 : PERIDECI -->
-    <div id="panel-PERIDECI" class="control-panel">
+    <div id="panel-DECIANALYSE" class="control-panel">
         <div class="flex-group">
-            <button class="btn-action btn-blue" onclick="simulerPointEau()">💧 Poser un Point d'Eau Incendie (PEI)</button>
-            <button class="btn-action btn-red" onclick="nettoyerCouche('PERIDECI')">❌ Effacer PEI</button>
+            <button class="btn-action btn-blue" onclick="nettoyerCouche('DECIANALYSE')">❌ Effacer PEI</button>
         </div>
-        <div class="info-txt">Double-cliquez pour valider la couverture des 200m et 400m DECI réglementaires.</div>
+        <div class="info-txt">Double-cliquez pour vérifier la couverture DECI réglementaire (200m et 400m).</div>
     </div>
 
-    <!-- LÉGENDE CONTEXTUELLE PERISECU -->
-    <div id="legende-PERISECU" class="legende-flottante" style="display: flex;">
+    <div id="panel-PERIMETRE-DECI" class="control-panel">
+        <div class="flex-group">
+            <button class="btn-action btn-purple" onclick="document.getElementById('file-input').click()">📁 Ouvrir Plan / PDF</button>
+            <input type="file" id="file-input" accept="application/pdf">
+            
+            <select id="select-distance" class="select-ui">
+                <option value="400">400 m (Repère court)</option>
+                <option value="1000">1 km</option>
+                <option value="2000" selected>2 km (Carré DFCI)</option>
+            </select>
+            <button id="btn-regle" class="btn-action btn-blue" onclick="basculerModeRegle()">📏 Règle Échelle</button>
+            <input type="number" id="input-scale" class="input-ui" style="width:60px;" value="300" onchange="mettreAJourEchelleDirecte(this.value)"> <span>px pour 2km</span>
+        </div>
+        <button class="btn-action btn-red" onclick="nettoyerCouche('PERIMETRE-DECI')">❌ Effacer plan</button>
+    </div>
+
+    <div id="legende-STANDARD" class="legende-flottante" style="display: flex;">
         <div class="legende-item" style="background: #ff5252;"><span>200 m</span></div>
         <div class="legende-item" style="background: #ffab40;"><span>400 m</span></div>
         <div class="legende-item" style="background: #ffd740;"><span>1 km</span></div>
@@ -117,203 +132,79 @@
         <div class="legende-item" style="background: #66bb6a;"><span>4 km</span></div>
     </div>
 
-    <!-- LÉGENDE CONTEXTUELLE PERIDECI -->
-    <div id="legende-PERIDECI" class="legende-flottante">
-        <div class="legende-item" style="background: #2ae314;"><span>200 m (Idéal)</span></div>
-        <div class="legende-item" style="background: #e3a414;"><span>400 m (Max)</span></div>
+    <div id="legende-DECI" class="legende-flottante">
+        <div class="legende-item" style="background: #10b981; color: white;"><span>200 m</span></div>
+        <div class="legende-item" style="background: #f59e0b; color: black;"><span>400 m</span></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Variables globales d'état
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // Variables globales
         let currentApp = "PERISECU";
         let interfaceMasquee = false;
+        let PIXELS_POUR_2000M = 300; 
+        let modeRegleActive = false;
+        let pointsMesure = [];
         let pointsPolygoneFeu = [];
         let polygoneFeuActuel = null;
         let modeDessinFeu = false;
 
-        // Configuration de la carte Leaflet (Centrée par défaut sur le secteur Gironde / Castillon)
+        // Configuration de la carte Leaflet (Centrée par défaut secteur Gironde)
         const map = L.map('map', { zoomControl: false, attributionControl: false, doubleClickZoom: false }).setView([44.89, -0.04], 11);
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-        // Fonds de carte IGN officiels
+        // Fonds de carte IGN
         const scan25IGN = L.tileLayer('https://data.geopf.fr/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', { maxZoom: 18 });
         const satelliteIGN = L.tileLayer('https://data.geopf.fr/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', { maxZoom: 19 });
         
         L.control.layers({ "Carte Topo IGN": scan25IGN, "Vues Satellite": satelliteIGN }, null, { position: 'bottomleft', collapsed: true }).addTo(map);
         scan25IGN.addTo(map);
 
-        // Groupes de calques dédiés pour isoler chaque application
+        // Groupes de calques isolés
         const layers = {
             PERISECU: L.featureGroup().addTo(map),
             CALSURFEU: L.featureGroup().addTo(map),
             LAMBERTMAPS: L.featureGroup().addTo(map),
-            PERIDECI: L.featureGroup().addTo(map)
+            DECIANALYSE: L.featureGroup().addTo(map),
+            "PERIMETRE-DECI": L.featureGroup().addTo(map)
         };
+        let currentPlanPdf = null;
 
-        // ================= GESTION DES ONGLETS DE LA CONSOLE =================
+        // ================= SWITCH ONGLET TACTIQUE =================
         function switchApp(appName, element) {
             currentApp = appName;
             modeDessinFeu = false;
+            modeRegleActive = false;
             
-            // MAJ Boutons
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             element.classList.add('active');
             
-            // MAJ Panneaux
             document.querySelectorAll('.control-panel').forEach(p => p.classList.remove('active'));
             document.getElementById(`panel-${appName}`).classList.add('active');
 
-            // MAJ Légendes
+            // Switch dynamique de la légende opérationnelle
             document.querySelectorAll('.legende-flottante').forEach(l => l.style.display = 'none');
-            const legendeExistante = document.getElementById(`legende-${appName}`);
-            if (legendeExistante) legendeExistante.style.display = 'flex';
+            if (appName === 'DECIANALYSE') {
+                document.getElementById('legende-DECI').style.display = 'flex';
+            } else if (appName === 'PERISECU' || appName === 'PERIMETRE-DECI') {
+                document.getElementById('legende-STANDARD').style.display = 'flex';
+            }
         }
 
-        // ================= LOGIQUE COMMUNE : DOUBLE CLIC & COORDONNÉES =================
+        // ================= DOUBLE CLIC INTERACTION =================
         map.on('dblclick', function(e) {
-            const point = e.latlng;
+            if (modeRegleActive || modeDessinFeu) return;
+            if (currentApp !== "PERISECU" && currentApp !== "PERIMETRE-DECI" && currentApp !== "DECIANALYSE") return;
+            if (currentApp === "PERIMETRE-DECI" && !currentPlanPdf) return;
 
-            if (currentApp === "PERISECU") {
-                layers.PERISECU.clearLayers();
-                const rayons = [
-                    { r: 200, c: '#ff5252' }, { r: 400, c: '#ffab40' },
-                    { r: 1000, c: '#ffd740' }, { r: 2000, c: '#29b6f6' }, { r: 4000, c: '#66bb6a' }
-                ];
-                rayons.forEach(config => {
-                    L.circle(point, { radius: config.r, color: config.c, weight: 2.5, fillOpacity: 0.03, dashArray: '5, 5' }).addTo(layers.PERISECU);
-                });
-                L.circleMarker(point, { radius: 5, color: '#fff', fillColor: '#000', fillOpacity: 1 }).addTo(layers.PERISECU);
-            } 
-            
-            else if (currentApp === "PERIDECI") {
-                layers.PERIDECI.clearLayers();
-                // Rayon couverture DECI : 200m (recommandé) et 400m (distance limite de raccordement de lignes de tuyaux)
-                L.circle(point, { radius: 200, color: '#2ae314', weight: 3, fillOpacity: 0.06 }).addTo(layers.PERIDECI);
-                L.circle(point, { radius: 400, color: '#e3a414', weight: 2, fillOpacity: 0.02, dashArray: '4, 4' }).addTo(layers.PERIDECI);
-                
-                // Icône PEI symbolique
-                L.circleMarker(point, { radius: 6, color: '#fff', fillColor: '#0284c7', fillOpacity: 1, weight: 2 }).addTo(layers.PERIDECI);
-            }
-        });
+            const targetLayer = layers[currentApp];
+            targetLayer.clearLayers();
+            const pointCentral = e.latlng;
 
-        // ================= APPLICATION 1 : PERISECU (GPS) =================
-        function declencherGps() {
-            map.locate({ setView: true, maxZoom: 15 });
-        }
-        map.on('locationfound', function(e) {
-            if (currentApp !== "PERISECU") return;
-            layers.PERISECU.clearLayers();
-            L.circleMarker(e.latlng, { radius: 6, color: '#fff', fillColor: '#b91c1c', fillOpacity: 1 }).addTo(layers.PERISECU);
-            map.panTo(e.latlng);
-        });
-
-        // ================= APPLICATION 2 : CALSURFEU =================
-        function activerDessinPolygone() {
-            modeDessinFeu = true;
-            pointsPolygoneFeu = [];
-            layers.CALSURFEU.clearLayers();
-            document.getElementById('calcul-surface').innerText = "Cliquez successivement sur la carte pour délimiter le sinistre...";
-        }
-
-        map.on('click', function(e) {
-            if (!modeDessinFeu || currentApp !== "CALSURFEU") return;
-
-            pointsPolygoneFeu.push(e.latlng);
-            L.circleMarker(e.latlng, { radius: 4, color: '#ffaa00', fillColor: '#fff', fillOpacity: 1 }).addTo(layers.CALSURFEU);
-
-            if (pointsPolygoneFeu.length > 1) {
-                if (polygoneFeuActuel) layers.CALSURFEU.removeLayer(polygoneFeuActuel);
-                polygoneFeuActuel = L.polygon(pointsPolygoneFeu, { color: '#ff5252', weight: 3, fillColor: '#ff5252', fillOpacity: 0.3 }).addTo(layers.CALSURFEU);
-                
-                // Calcul de la surface réelle (Approximation par coordonnées projetées simples en m²)
-                let surfaceM2 = calculerSurfacePolygone(pointsPolygoneFeu);
-                let surfaceHectares = surfaceM2 / 10000;
-                document.getElementById('calcul-surface').innerText = `Surface estimée : ${surfaceHectares.toFixed(2)} ha`;
-            }
-        });
-
-        function calculerSurfacePolygone(latlngs) {
-            let total = 0;
-            const r = 6378137; // Rayon de la Terre
-            for (let i = 0, l = latlngs.length; i < l; i++) {
-                let p1 = latlngs[i];
-                let p2 = latlngs[(i + 1) % l];
-                total += (p2.lng * (Math.PI / 180) - p1.lng * (Math.PI / 180)) * (2 + Math.sin(p1.lat * (Math.PI / 180)) + Math.sin(p2.lat * (Math.PI / 180)));
-            }
-            return Math.abs(total * r * r / 2);
-        }
-
-        // ================= APPLICATION 3 : LAMBERTMAPS =================
-        function convertirEtProjeterLambert() {
-            const x = parseFloat(document.getElementById('lambert-x').value);
-            const y = parseFloat(document.getElementById('lambert-y').value);
-            
-            if (!x || !y) {
-                document.getElementById('Statut-lambert').innerText = "⚠️ Veuillez saisir X et Y.";
-                return;
-            }
-
-            // Moteur de conversion mathématique strict Lambert II Étendu vers WGS84 (Zone Gironde)
-            const wgs84 = lambert2EtenduToWGS84(x, y);
-            
-            layers.LAMBERTMAPS.clearLayers();
-            L.marker([wgs84.lat, wgs84.lng]).addTo(layers.LAMBERTMAPS)
-                .bindPopup(`<b>Point Lambert II</b><br>X: ${x}<br>Y: ${y}<br>GPS: ${wgs84.lat.toFixed(5)}, ${wgs84.lng.toFixed(5)}`)
-                .openPopup();
-                
-            map.setView([wgs84.lat, wgs84.lng], 14);
-            document.getElementById('Statut-lambert').innerText = `Projection réussie ✔️`;
-        }
-
-        function lambert2EtenduToWGS84(X, Y) {
-            // Constantes d'étalonnage pour le système Lambert II Étendu NTF
-            const n = 0.7289686274;
-            const c = 11745793.39;
-            const x0 = 600000;
-            const y0 = 2200000;
-            const xs = X - x0;
-            const ys = Y - y0;
-            const r = Math.sqrt(xs*xs + (c - ys)*(c - ys));
-            const gamma = Math.atan(xs / (c - ys));
-            
-            const latIso = Math.log(c / r) / n;
-            // Transformation itérative simplifiée vers ellipsoïde WGS84 globale
-            let lat = 2 * Math.atan(Math.exp(latIso)) - Math.PI/2;
-            for(let i=0; i<5; i++) {
-                lat = 2 * Math.atan(Math.pow((1 + 0.0824832568 * Math.sin(lat)) / (1 - 0.0824832568 * Math.sin(lat)), 0.0824832568 / 2) * Math.exp(latIso)) - Math.PI/2;
-            }
-            const lng = (gamma / n) + (2.33722917 * Math.PI / 180); // Méridien de Paris inclus
-            
-            return { lat: lat * 180 / Math.PI, lng: lng * 180 / Math.PI };
-        }
-
-        // ================= INTERFACE ET NETTOYAGE =================
-        function basculerPleinEcran() {
-            interfaceMasquee = !interfaceMasquee;
-            const menu = document.getElementById('nav-tabs');
-            const bandeau = document.getElementById(`panel-${currentApp}`);
-            const btn = document.getElementById('btn-masquer');
-            
-            if (interfaceMasquee) {
-                menu.style.opacity = '0'; menu.style.pointerEvents = 'none';
-                bandeau.style.opacity = '0'; bandeau.style.pointerEvents = 'none';
-                btn.innerText = "👁️ Afficher les outils"; btn.style.background = "#8b5cf6";
-            } else {
-                menu.style.opacity = '1'; menu.style.pointerEvents = 'auto';
-                bandeau.style.opacity = '1'; bandeau.style.pointerEvents = 'auto';
-                btn.innerText = "👁️ Masquer les outils"; btn.style.background = "#374151";
-            }
-        }
-
-        function nettoyerCouche(appName) {
-            layers[appName].clearLayers();
-            if (appName === 'CALSURFEU') {
-                pointsPolygoneFeu = [];
-                polygoneFeuActuel = null;
-                document.getElementById('calcul-surface').innerText = "Surface estimée : 0.00 ha";
-            }
-        }
-    </script>
-</body>
-</html>
+            if (currentApp === "DECIANALYSE") {
+                // Analyse DECI : Cercles pleins fins de 200m et 400m
+                L.circle(pointCentral, { radius: 200, color: '#10b981', weight: 2.5, fillColor: '#10b981', fillOpacity: 0.06 }).addTo(targetLayer);
+                L.circle(pointCentral, { radius: 400, color: '#f59e0b', weight: 2, fillColor: '#f59e0b', fillOpacity: 0.02, dashArray: '4, 4' }).addTo(targetLayer);
+                L.circleMarker(pointCentral, { radius: 5, color: '#fff', fillColor: '#0284c7', fillOpacity: 1 }).addTo(targetLayer);
