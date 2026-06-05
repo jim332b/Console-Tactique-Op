@@ -50,7 +50,7 @@
         
         .info-txt { font-weight: bold; color: #38bdf8; font-size: 11px; }
 
-        /* LÉGENDES OPÉRATIONNELLES FLOTTANTES (PERSISTANTES SUR PLEIN ÉCRAN) */
+        /* LÉGENDES OPÉRATIONNELLES FLOTTANTES */
         .legende-flottante {
             position: absolute; bottom: 15px; right: 15px; z-index: 1005;
             background: rgba(20, 20, 20, 0.95); padding: 8px 12px; border-radius: 6px; border: 1px solid #444;
@@ -73,7 +73,7 @@
         <button class="tab-btn" onclick="switchApp('CALSURFEU', this)">🔥 CALSURFEU</button>
         <button class="tab-btn" onclick="switchApp('LAMBERTMAPS', this)">🌐 LAMBERTMAPS</button>
         <button class="tab-btn" onclick="switchApp('DECIANALYSE', this)">💧 DECIANALYSE</button>
-        <button class="tab-btn" onclick="switchApp('PERIMETRE-DECI', this)"> Plan fixe</button>
+        <button class="tab-btn" onclick="switchApp('PERIMETRE-DECI', this)">📐 PLAN FIXE</button>
     </div>
 
     <div id="panel-PERISECU" class="control-panel active">
@@ -98,14 +98,14 @@
             <input type="number" id="lambert-y" class="input-ui input-lambert" placeholder="Coordonnée Y (Ex: 2243100)">
             <button class="btn-action btn-blue" onclick="convertirEtProjeterLambert()">🗺️ Projeter</button>
         </div>
-        <div id="Statut-lambert" class="info-txt">Saisir coordonnées Lambert II Étendu (Gironde).</div>
+        <div id="Statut-lambert" class="info-txt">Saisir coordonnées Lambert II Étendu.</div>
     </div>
 
     <div id="panel-DECIANALYSE" class="control-panel">
         <div class="flex-group">
-            <button class="btn-action btn-blue" onclick="nettoyerCouche('DECIANALYSE')">❌ Effacer PEI</button>
+            <button class="btn-action btn-red" onclick="nettoyerCouche('DECIANALYSE')">❌ Effacer PEI</button>
         </div>
-        <div class="info-txt">Double-cliquez pour vérifier la couverture DECI réglementaire (200m et 400m).</div>
+        <div class="info-txt">Double-cliquez pour vérifier la couverture DECI (200m et 400m).</div>
     </div>
 
     <div id="panel-PERIMETRE-DECI" class="control-panel">
@@ -114,7 +114,7 @@
             <input type="file" id="file-input" accept="application/pdf">
             
             <select id="select-distance" class="select-ui">
-                <option value="400">400 m (Repère court)</option>
+                <option value="400">400 m</option>
                 <option value="1000">1 km</option>
                 <option value="2000" selected>2 km (Carré DFCI)</option>
             </select>
@@ -151,18 +151,22 @@
         let polygoneFeuActuel = null;
         let modeDessinFeu = false;
 
-        // Configuration de la carte Leaflet (Centrée par défaut secteur Gironde)
+        // Init de la carte centrée sur la Gironde
         const map = L.map('map', { zoomControl: false, attributionControl: false, doubleClickZoom: false }).setView([44.89, -0.04], 11);
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-        // Fonds de carte IGN
+        // Couches Cartographiques (IGN + Secours OpenStreetMap standard si déconnecté)
         const scan25IGN = L.tileLayer('https://data.geopf.fr/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', { maxZoom: 18 });
         const satelliteIGN = L.tileLayer('https://data.geopf.fr/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', { maxZoom: 19 });
+        const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
         
-        L.control.layers({ "Carte Topo IGN": scan25IGN, "Vues Satellite": satelliteIGN }, null, { position: 'bottomleft', collapsed: true }).addTo(map);
+        L.control.layers({ "Carte Topo IGN": scan25IGN, "Vues Satellite": satelliteIGN, "Plan Secours OpenStreetMap": osmStandard }, null, { position: 'bottomleft', collapsed: true }).addTo(map);
+        
+        // On active OSM puis l'IGN pour éviter l'écran blanc si la clé d'API Geoportail met du temps à répondre
+        osmStandard.addTo(map);
         scan25IGN.addTo(map);
 
-        // Groupes de calques isolés
+        // Calques d'applications indépendants
         const layers = {
             PERISECU: L.featureGroup().addTo(map),
             CALSURFEU: L.featureGroup().addTo(map),
@@ -184,7 +188,7 @@
             document.querySelectorAll('.control-panel').forEach(p => p.classList.remove('active'));
             document.getElementById(`panel-${appName}`).classList.add('active');
 
-            // Switch dynamique de la légende opérationnelle
+            // Affichage de la bonne légende
             document.querySelectorAll('.legende-flottante').forEach(l => l.style.display = 'none');
             if (appName === 'DECIANALYSE') {
                 document.getElementById('legende-DECI').style.display = 'flex';
@@ -193,7 +197,7 @@
             }
         }
 
-        // ================= DOUBLE CLIC INTERACTION =================
+        // ================= GESTION DES CLICS / DOUBLE CLIC =================
         map.on('dblclick', function(e) {
             if (modeRegleActive || modeDessinFeu) return;
             if (currentApp !== "PERISECU" && currentApp !== "PERIMETRE-DECI" && currentApp !== "DECIANALYSE") return;
@@ -204,7 +208,109 @@
             const pointCentral = e.latlng;
 
             if (currentApp === "DECIANALYSE") {
-                // Analyse DECI : Cercles pleins fins de 200m et 400m
                 L.circle(pointCentral, { radius: 200, color: '#10b981', weight: 2.5, fillColor: '#10b981', fillOpacity: 0.06 }).addTo(targetLayer);
                 L.circle(pointCentral, { radius: 400, color: '#f59e0b', weight: 2, fillColor: '#f59e0b', fillOpacity: 0.02, dashArray: '4, 4' }).addTo(targetLayer);
                 L.circleMarker(pointCentral, { radius: 5, color: '#fff', fillColor: '#0284c7', fillOpacity: 1 }).addTo(targetLayer);
+            } else {
+                const configurationsRayons = [
+                    { rayon: 200, couleur: '#ff5252' }, { rayon: 400, couleur: '#ffab40' },
+                    { rayon: 1000, couleur: '#ffd740' }, { rayon: 2000, couleur: '#29b6f6' }, { rayon: 4000, couleur: '#66bb6a' }
+                ];
+                configurationsRayons.forEach(config => {
+                    let rayonCalculé = (currentApp === "PERIMETRE-DECI") ? (config.rayon * (PIXELS_POUR_2000M / 2300)) : config.rayon;
+                    L.circle(pointCentral, {
+                        radius: rayonCalculé, color: config.couleur, weight: 3, fillColor: config.couleur, fillOpacity: 0.05, dashArray: '5, 5'
+                    }).addTo(targetLayer);
+                });
+                L.circleMarker(pointCentral, { radius: 5, color: '#fff', fillColor: '#000', fillOpacity: 1, weight: 2 }).addTo(targetLayer);
+            }
+        });
+
+        // ================= GPS (PERISECU) =================
+        function declencherGps() {
+            map.locate({ setView: true, maxZoom: 15 });
+        }
+        map.on('locationfound', function(e) {
+            if (currentApp !== "PERISECU") return;
+            layers.PERISECU.clearLayers();
+            L.circleMarker(e.latlng, { radius: 6, color: '#fff', fillColor: '#b91c1c', fillOpacity: 1 }).addTo(layers.PERISECU);
+            map.panTo(e.latlng);
+        });
+
+        // ================= DETOURAGE FEU (CALSURFEU) & REGLE ÉCHELLE =================
+        function activerDessinPolygone() {
+            modeDessinFeu = true;
+            pointsPolygoneFeu = [];
+            layers.CALSURFEU.clearLayers();
+            document.getElementById('calcul-surface').innerText = "Cliquez sur la carte pour délimiter le sinistre...";
+        }
+
+        map.on('click', function(e) {
+            if (currentApp === "CALSURFEU" && modeDessinFeu) {
+                pointsPolygoneFeu.push(e.latlng);
+                L.circleMarker(e.latlng, { radius: 4, color: '#ffaa00', fillColor: '#fff', fillOpacity: 1 }).addTo(layers.CALSURFEU);
+
+                if (pointsPolygoneFeu.length > 1) {
+                    if (polygoneFeuActuel) layers.CALSURFEU.removeLayer(polygoneFeuActuel);
+                    polygoneFeuActuel = L.polygon(pointsPolygoneFeu, { color: '#ff5252', weight: 3, fillColor: '#ff5252', fillOpacity: 0.3 }).addTo(layers.CALSURFEU);
+                    let total = 0; const r = 6378137;
+                    for (let i = 0, l = pointsPolygoneFeu.length; i < l; i++) {
+                        let p1 = pointsPolygoneFeu[i]; let p2 = pointsPolygoneFeu[(i + 1) % l];
+                        total += (p2.lng * (Math.PI / 180) - p1.lng * (Math.PI / 180)) * (2 + Math.sin(p1.lat * (Math.PI / 180)) + Math.sin(p2.lat * (Math.PI / 180)));
+                    }
+                    let surfaceM2 = Math.abs(total * r * r / 2);
+                    document.getElementById('calcul-surface').innerText = `Surface estimée : ${(surfaceM2 / 10000).toFixed(2)} ha`;
+                }
+            }
+            
+            if (currentApp === "PERIMETRE-DECI" && modeRegleActive) {
+                pointsMesure.push(e.latlng);
+                L.circleMarker(e.latlng, { radius: 4, color: '#eab308', fillColor: '#fff', fillOpacity: 1 }).addTo(layers["PERIMETRE-DECI"]);
+
+                if (pointsMesure.length === 2) {
+                    const p1 = map.latLngToLayerPoint(pointsMesure[0]);
+                    const p2 = map.latLngToLayerPoint(pointsMesure[1]);
+                    const distancePixels = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+                    const distanceCibleMetres = parseFloat(document.getElementById('select-distance').value);
+                    const etalonCalcule = Math.round((distancePixels / distanceCibleMetres) * 2000);
+
+                    L.polyline(pointsMesure, { color: '#eab308', weight: 3, dashArray: '4, 4' }).addTo(layers["PERIMETRE-DECI"]);
+                    document.getElementById('input-scale').value = etalonCalcule;
+                    PIXELS_POUR_2000M = etalonCalcule;
+                    modeRegleActive = false;
+                    document.getElementById('btn-regle').style.background = '#0284c7';
+                }
+            }
+        });
+
+        // ================= CONVERTISSEUR LAMBERT II ETENDU STRICT =================
+        function convertirEtProjeterLambert() {
+            const x = parseFloat(document.getElementById('lambert-x').value);
+            const y = parseFloat(document.getElementById('lambert-y').value);
+            if (!x || !y) return;
+
+            const n = 0.7289686274; const c = 11745793.39;
+            const x0 = 600000; const y0 = 2200000;
+            const xs = x - x0; const ys = y - y0;
+            const r = Math.sqrt(xs*xs + (c - ys)*(c - ys));
+            const gamma = Math.atan(xs / (c - ys));
+            let latIso = Math.log(c / r) / n;
+            let lat = 2 * Math.atan(Math.exp(latIso)) - Math.PI/2;
+            for(let i=0; i<5; i++) {
+                lat = 2 * Math.atan(Math.pow((1 + 0.0824832568 * Math.sin(lat)) / (1 - 0.0824832568 * Math.sin(lat)), 0.0824832568 / 2) * Math.exp(latIso)) - Math.PI/2;
+            }
+            const lng = (gamma / n) + (2.33722917 * Math.PI / 180);
+            const latDeg = lat * 180 / Math.PI; const lngDeg = lng * 180 / Math.PI;
+
+            layers.LAMBERTMAPS.clearLayers();
+            L.marker([latDeg, lngDeg]).addTo(layers.LAMBERTMAPS)
+                .bindPopup(`<b>Lambert II Étendu</b><br>X: ${x}<br>Y: ${y}`).openPopup();
+            map.setView([latDeg, lngDeg], 14);
+            document.getElementById('Statut-lambert').innerText = `Projeté ✔️`;
+        }
+
+        // ================= CHARGEMENT DU PLAN / PDF =================
+        function mettreAJourEchelleDirecte(valeur) { PIXELS_POUR_2000M = parseFloat(valeur); }
+        function basculerModeRegle() {
+            modeRegleActive = !modeRegleActive; pointsMesure = [];
+            document.getElementById('btn-regle').style.background = modeRegleActive ? '#eab308' : '#0284c7';
