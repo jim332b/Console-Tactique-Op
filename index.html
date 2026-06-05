@@ -43,7 +43,6 @@
             gap: 15px;
             background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
         }
-        /* Gestion de l'affichage de l'accueil */
         #menu-accueil.masque { display: none !important; }
         
         .menu-titre { color: #ffffff; font-size: 26px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
@@ -59,57 +58,74 @@
         .btn-perim { background-color: #337ab7; }
         .btn-pdf { background-color: var(--btn-purple); }
 
-        /* --- CONTENEURS DES ECRANS APPLIS (OPTIMISÉS FIREFOX / CHROME / TACTILE) --- */
+        /* --- CONTENEURS DES ECRANS APPLIS (DISPOSITION HORIZONTALE POUR BOUTON LATÉRAL) --- */
         .app-container { 
             display: none; 
             height: 100vh; 
             width: 100%; 
             position: relative; 
             box-sizing: border-box;
-            flex-direction: column;
-            justify-content: space-between;
+            flex-direction: row; /* Aligne le bouton et la carte côte à côte */
+            justify-content: flex-start;
+            align-items: stretch;
         }
         
-        /* Classe forcée pour Firefox et Chrome */
         .app-container.actif {
             display: flex !important; 
         }
         
-        .map-canvas { 
+        /* La zone de contenu (carte ou formulaire) prend tout l'espace restant à droite du bouton */
+        .app-content-wrapper {
             flex-grow: 1;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-canvas { 
             width: 100%; 
+            height: 100%;
             background: #222; 
         }
 
-        /* --- LE BOUTON MENU DE RETOUR --- */
+        /* --- NOUVEAU BOUTON RETOUR VERTICAL (EN LONG SUR LE CÔTÉ GAUCHE) --- */
         .btn-retour {
-            width: 100%; 
-            height: 65px;
-            min-height: 65px;
+            width: 50px; 
+            min-width: 50px;
+            height: 100vh;
             z-index: 5000; 
             background: #222222; 
             color: white; 
             border: none;
-            border-top: 1px solid #333; 
+            border-right: 1px solid #333; 
             font-weight: bold; 
-            font-size: 15px;
+            font-size: 14px;
             cursor: pointer; 
             text-transform: uppercase; 
             letter-spacing: 1px;
             display: flex; 
             align-items: center; 
             justify-content: center;
-            padding-bottom: env(safe-area-inset-bottom);
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            padding: 5px;
         }
         .btn-retour:active { background: #333333; }
+        
+        /* Permet d'écrire le texte verticalement de bas en haut */
+        .btn-retour span {
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            display: inline-block;
+        }
 
         /* --- PANNEAUX DE COMMANDES INTERNES --- */
         .panel-ops {
-            position: absolute; top: 15px; left: 5%; right: 5%; z-index: 1000;
+            position: absolute; top: 15px; left: 15px; right: 15px; z-index: 1000;
             background: rgba(25, 25, 25, 0.96); color: white; padding: 12px; border-radius: 8px;
-            border: 1px solid #333; box-shadow: 0 4px 12px rgba(0,0,0,0.5); width: 90%; box-sizing: border-box;
+            border: 1px solid #333; box-shadow: 0 4px 12px rgba(0,0,0,0.5); box-sizing: border-box;
         }
         
         /* App 1 : CALSURFEU */
@@ -125,7 +141,7 @@
         .feu-reset { background: var(--btn-reset); }
         
         /* App 2 : LAMBERTMAPS */
-        #container-coord { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background-color: #1e293b; padding: 20px 10px; box-sizing: border-box; overflow-y: auto; }
+        #container-coord { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background-color: #1e293b; padding: 20px 10px; box-sizing: border-box; overflow-y: auto; }
         .panel-coord-pure { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155; max-width: 360px; width: 100%; box-sizing: border-box; }
         .panel-coord-pure h2 { color: #38bdf8; margin-top: 0; text-align: center; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .input-group { margin-bottom: 15px; }
@@ -192,113 +208,120 @@
     </div>
 
     <div id="app-feu" class="app-container">
-        <div id="map-feu" class="map-canvas"></div>
-        <div id="panel-feu" class="panel-ops">
-            <div id="feu-status">Recherche Signal...</div>
-            <div class="feu-surface-container">
-                <div id="feu-display-m2">0 m²</div>
-                <div id="feu-display-ha">0.00 ha</div>
-            </div>
-            <div class="feu-btn-group">
-                <button id="feu-btnAction" class="feu-panel-btn feu-start" onclick="gererTracageFeu()">Démarrer</button>
-                <button id="feu-btnReset" class="feu-panel-btn feu-reset" onclick="effacerTracageFeu()">Effacer</button>
+        <button class="btn-retour" onclick="reinitialiserEtRetour()"><span>⬅️ Menu Principal</span></button>
+        <div class="app-content-wrapper">
+            <div id="map-feu" class="map-canvas"></div>
+            <div id="panel-feu" class="panel-ops">
+                <div id="feu-status">Recherche Signal...</div>
+                <div class="feu-surface-container">
+                    <div id="feu-display-m2">0 m²</div>
+                    <div id="feu-display-ha">0.00 ha</div>
+                </div>
+                <div class="feu-btn-group">
+                    <button id="feu-btnAction" class="feu-panel-btn feu-start" onclick="gererTracageFeu()">Démarrer</button>
+                    <button id="feu-btnReset" class="feu-panel-btn feu-reset" onclick="effacerTracageFeu()">Effacer</button>
+                </div>
             </div>
         </div>
-        <button class="btn-retour" onclick="reinitialiserEtRetour()">⬅️ Retour Menu</button>
     </div>
 
     <div id="app-coord" class="app-container">
-        <div id="container-coord">
-            <div class="panel-coord-pure">
-                <h2>Calculateur Ops</h2>
-                <div class="input-group">
-                    <label for="coordX">Coordonnée X (Lambert II)</label>
-                    <input type="number" id="coordX" step="0.1" value="565400">
-                </div>
-                <div class="input-group">
-                    <label for="coordY">Coordonnée Y (Lambert II)</label>
-                    <input type="number" id="coordY" step="0.1" value="2243100">
-                </div>
-                <button class="btn-convert" onclick="executerConversion()">1. Convertir en Lambert II</button>
-                <div id="zoneResultat" style="display: none;">
-                    <div class="result-box">
-                        <div class="result-title">Coordonnées GPS (WGS84)</div>
-                        <div class="result-values" id="gpsDisplay">0.00000, 0.00000</div>
+        <button class="btn-retour" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        <div class="app-content-wrapper">
+            <div id="container-coord">
+                <div class="panel-coord-pure">
+                    <h2>Calculateur Ops</h2>
+                    <div class="input-group">
+                        <label for="coordX">Coordonnée X (Lambert II)</label>
+                        <input type="number" id="coordX" step="0.1" value="565400">
                     </div>
-                    <button class="btn-maps" id="btnMaps" onclick="ouvrirGoogleMaps()">2. Calculer l'itinéraire</button>
+                    <div class="input-group">
+                        <label for="coordY">Coordonnée Y (Lambert II)</label>
+                        <input type="number" id="coordY" step="0.1" value="2243100">
+                    </div>
+                    <button class="btn-convert" onclick="executerConversion()">1. Convertir en Lambert II</button>
+                    <div id="zoneResultat" style="display: none;">
+                        <div class="result-box">
+                            <div class="result-title">Coordonnées GPS (WGS84)</div>
+                            <div class="result-values" id="gpsDisplay">0.00000, 0.00000</div>
+                        </div>
+                        <button class="btn-maps" id="btnMaps" onclick="ouvrirGoogleMaps()">2. Calculer l'itinéraire</button>
+                    </div>
                 </div>
             </div>
         </div>
-        <button class="btn-retour" onclick="retourAccueil()">⬅️ Retour Menu</button>
     </div>
 
     <div id="app-perim" class="app-container">
-        <div id="map-perim" class="map-canvas"></div>
-        <div id="panel-perim" class="panel-ops">
-            <div class="ligne-1">
-                <button class="dist-btn" onclick="tracerRayonFixe(50)">50m</button>
-                <button class="dist-btn" onclick="tracerRayonFixe(100)">100m</button>
-                <button class="dist-btn" onclick="tracerRayonFixe(200)">200m</button>
-                <button class="dist-btn" onclick="tracerRayonFixe(300)">300m</button>
-                <button class="dist-btn" onclick="tracerRayonFixe(500)">500m</button>
-            </div>
-            <div class="ligne-2">
-                <div class="section-data">
-                    <div><span class="label">Péri:</span> <span id="perim-perim" class="valeur">-</span></div>
-                    <div><span class="label">Surf:</span> <span id="perim-surf" class="valeur">-</span></div>
+        <button class="btn-retour" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        <div class="app-content-wrapper">
+            <div id="map-perim" class="map-canvas"></div>
+            <div id="panel-perim" class="panel-ops">
+                <div class="ligne-1">
+                    <button class="dist-btn" onclick="tracerRayonFixe(50)">50m</button>
+                    <button class="dist-btn" onclick="tracerRayonFixe(100)">100m</button>
+                    <button class="dist-btn" onclick="tracerRayonFixe(200)">200m</button>
+                    <button class="dist-btn" onclick="tracerRayonFixe(300)">300m</button>
+                    <button class="dist-btn" onclick="tracerRayonFixe(500)">500m</button>
                 </div>
-                <button class="main-btn" onclick="declencherGpsPerim()">📍 Recentrer</button>
-                <div id="perim-debug" class="debug-lbl">GPS...</div>
+                <div class="ligne-2">
+                    <div class="section-data">
+                        <div><span class="label">Péri:</span> <span id="perim-perim" class="valeur">-</span></div>
+                        <div><span class="label">Surf:</span> <span id="perim-surf" class="valeur">-</span></div>
+                    </div>
+                    <button class="main-btn" onclick="declencherGpsPerim()">📍 Recentrer</button>
+                    <div id="perim-debug" class="debug-lbl">GPS...</div>
+                </div>
             </div>
         </div>
-        <button class="btn-retour" onclick="retourAccueil()">⬅️ Retour Menu</button>
     </div>
 
     <div id="app-pdfdec" class="app-container">
-        <div id="map-pdfdec" class="map-canvas"></div>
-        
-        <div style="position: absolute; top: 12px; right: 15px; z-index: 1005;">
-            <button class="btn-action btn-toggle" onclick="basculerInterfacePdf()" id="btn-masquer">👁️ Masquer les outils</button>
-        </div>
-
-        <div id="top-interface-pdf">
-            <div class="outils-row" style="margin-bottom: 6px;">
-                <div class="flex-group">
-                    <button class="btn-action btn-purple" onclick="document.getElementById('file-input').click()">📁 Dalle PDF</button>
-                    <input type="file" id="file-input" accept="application/pdf">
-                    <button class="btn-action btn-red" onclick="effacerToutPdfDec()">❌ Effacer</button>
-                </div>
-                <div id="resultat-mesure">Double-cliquez sur le PDF pour les périmètres</div>
-            </div>
+        <button class="btn-retour" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        <div class="app-content-wrapper">
+            <div id="map-pdfdec" class="map-canvas"></div>
             
-            <div class="outils-row" style="border-top: 1px solid #333; padding-top: 6px;">
-                <div class="flex-group">
-                    <span style="font-size:11px; color:#aaa;">Règle :</span>
-                    <select id="select-distance" class="select-ui">
-                        <option value="400">400 m</option>
-                        <option value="1000">1 km</option>
-                        <option value="2000" selected>2 km (Carré DFCI)</option>
-                        <option value="4000">4 km</option>
-                    </select>
-                    <button id="btn-regle" class="btn-action btn-blue" onclick="basculerModeRegle()">📏 Activer</button>
+            <div style="position: absolute; top: 12px; right: 15px; z-index: 1005;">
+                <button class="btn-action btn-toggle" onclick="basculerInterfacePdf()" id="btn-masquer">👁️ Masquer les outils</button>
+            </div>
+
+            <div id="top-interface-pdf">
+                <div class="outils-row" style="margin-bottom: 6px;">
+                    <div class="flex-group">
+                        <button class="btn-action btn-purple" onclick="document.getElementById('file-input').click()">📁 Dalle PDF</button>
+                        <input type="file" id="file-input" accept="application/pdf">
+                        <button class="btn-action btn-red" onclick="effacerToutPdfDec()">❌ Effacer</button>
+                    </div>
+                    <div id="resultat-mesure">Double-cliquez sur le PDF pour les périmètres</div>
                 </div>
                 
-                <div class="flex-group">
-                    <span style="font-size:11px; color:#aaa;">Échelle :</span>
-                    <input type="number" id="input-scale" class="input-pixel" value="300" onchange="mettreAJourEchelleDirecte(this.value)"> <span style="font-size:11px; color:#aaa;">px pour 2km</span>
+                <div class="outils-row" style="border-top: 1px solid #333; padding-top: 6px;">
+                    <div class="flex-group">
+                        <span style="font-size:11px; color:#aaa;">Règle :</span>
+                        <select id="select-distance" class="select-ui">
+                            <option value="400">400 m</option>
+                            <option value="1000">1 km</option>
+                            <option value="2000" selected>2 km (Carré DFCI)</option>
+                            <option value="4000">4 km</option>
+                        </select>
+                        <button id="btn-regle" class="btn-action btn-blue" onclick="basculerModeRegle()">📏 Activer</button>
+                    </div>
+                    
+                    <div class="flex-group">
+                        <span style="font-size:11px; color:#aaa;">Échelle :</span>
+                        <input type="number" id="input-scale" class="input-pixel" value="300" onchange="mettreAJourEchelleDirecte(this.value)"> <span style="font-size:11px; color:#aaa;">px pour 2km</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div id="legende-ops">
-            <div class="legende-item" style="background: #ff5252;"><span>200 m</span></div>
-            <div class="legende-item" style="background: #ffab40;"><span>400 m</span></div>
-            <div class="legende-item" style="background: #ffd740;"><span>1 km</span></div>
-            <div class="legende-item" style="background: #29b6f6; color: white;"><span>2 km</span></div>
-            <div class="legende-item" style="background: #66bb6a;"><span>4 km</span></div>
+            <div id="legende-ops">
+                <div class="legende-item" style="background: #ff5252;"><span>200 m</span></div>
+                <div class="legende-item" style="background: #ffab40;"><span>400 m</span></div>
+                <div class="legende-item" style="background: #ffd740;"><span>1 km</span></div>
+                <div class="legende-item" style="background: #29b6f6; color: white;"><span>2 km</span></div>
+                <div class="legende-item" style="background: #66bb6a;"><span>4 km</span></div>
+            </div>
         </div>
-
-        <button class="btn-retour" onclick="retourAccueil()">⬅️ Retour Menu</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -310,11 +333,9 @@
         const tuilesSatelliteUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
         const attributionEsri = 'Esri';
 
-        // RESOLUTION COMPLETE CHROME + FIREFOX VIA MULTI-TIMING ASYNCHRONE
         function ouvrirApp(idApp) {
             currentAppId = idApp;
             
-            // Étape 1 : Masquage et bascule visuelle immédiate
             document.getElementById('menu-accueil').classList.add('masque');
             document.querySelectorAll('.app-container').forEach(app => {
                 app.classList.remove('actif');
@@ -323,7 +344,7 @@
             const appCible = document.getElementById(idApp);
             appCible.classList.add('actif');
             
-            // Étape 2 : Double boucle asynchrone conçue spécifiquement pour le moteur Gecko de Firefox
+            // Double boucle asynchrone pour le moteur Gecko de Firefox et Webkit (Chrome/Safari)
             requestAnimationFrame(() => {
                 setTimeout(() => { 
                     window.dispatchEvent(new Event('resize')); 
