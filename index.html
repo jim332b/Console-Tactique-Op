@@ -51,28 +51,47 @@
         .btn-perim { background-color: #337ab7; }
         .btn-pdf { background-color: var(--btn-purple); }
 
-        /* --- CONTENEURS DES ECRANS APPLIS --- */
+        /* --- CONTENEURS DES ECRANS APPLIS (CORRIGÉS POUR LA VISIBILITÉ DU BOUTON RETOUR) --- */
         .app-container { 
             display: none; 
             height: 100vh; 
             width: 100%; 
             position: relative; 
             box-sizing: border-box;
+            /* Flexbox verticale pour forcer le bouton retour à rester dans la zone visible */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         
+        /* Les cartes prennent automatiquement tout l'espace disponible au-dessus du bouton */
         .map-canvas { 
-            height: calc(100vh - 65px); 
+            flex-grow: 1;
             width: 100%; 
             background: #222; 
         }
 
-        /* --- LE BOUTON MENU DE RETOUR --- */
+        /* --- LE BOUTON MENU DE RETOUR (SÉCURISÉ) --- */
         .btn-retour {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 65px;
-            z-index: 5000; background: #222222; color: white; border: none;
-            border-top: 1px solid #333; font-weight: bold; font-size: 15px;
-            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-            display: flex; align-items: center; justify-content: center;
+            width: 100%; 
+            height: 65px;
+            min-height: 65px;
+            z-index: 5000; 
+            background: #222222; 
+            color: white; 
+            border: none;
+            border-top: 1px solid #333; 
+            font-weight: bold; 
+            font-size: 15px;
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            /* Prise en compte de la zone de sécurité basse des tablettes/smartphones (encoches/barre d'actions) */
+            padding-bottom: env(safe-area-inset-bottom);
+            box-sizing: border-box;
         }
         .btn-retour:active { background: #333333; }
 
@@ -96,7 +115,7 @@
         .feu-reset { background: var(--btn-reset); }
         
         /* App 2 : LAMBERTMAPS */
-        #container-coord { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: calc(100vh - 65px); background-color: #1e293b; padding: 20px 10px; box-sizing: border-box; overflow-y: auto; }
+        #container-coord { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background-color: #1e293b; padding: 20px 10px; box-sizing: border-box; overflow-y: auto; }
         .panel-coord-pure { background: #0f172a; padding: 20px; border-radius: 8px; border: 1px solid #334155; max-width: 360px; width: 100%; box-sizing: border-box; }
         .panel-coord-pure h2 { color: #38bdf8; margin-top: 0; text-align: center; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
         .input-group { margin-bottom: 15px; }
@@ -140,9 +159,9 @@
         #resultat-mesure { font-weight: bold; color: #38bdf8; font-size: 11px; text-align: center; }
         #file-input { display: none; }
 
-        /* LÉGENDE FLOTTANTE PERIDECI */
+        /* LÉGENDE FLOTTANTE PERIDECI (REHAUSSÉE POUR LA TABLETTE) */
         #legende-ops {
-            position: absolute; bottom: 80px; right: 15px; z-index: 1010;
+            position: absolute; bottom: 20px; right: 15px; z-index: 1010;
             background: rgba(20, 20, 20, 0.9); padding: 8px 12px; border-radius: 6px;
             border: 1px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             display: flex; flex-direction: column; gap: 4px; width: 85px; font-size: 10px; font-weight: bold;
@@ -159,7 +178,7 @@
         <button class="menu-btn btn-incendie" onclick="ouvrirApp('app-feu')">🔥 CALSURFEU</button>
         <button class="menu-btn btn-coord" onclick="ouvrirApp('app-coord')">🌐 LAMBERTMAPS</button>
         <button class="menu-btn btn-perim" onclick="ouvrirApp('app-perim')">⭕ PERISECU</button>
-        <button class="menu-btn btn-pdf" onclick="ouvrirApp('app-pdfdec')">📐 PERIDECI</button>
+        <button class="menu-btn btn-pdf" onclick="ouvrirApp('app-pdfdec')">📐 PERIDECI (PLAN FIXE)</button>
     </div>
 
     <div id="app-feu" class="app-container">
@@ -226,7 +245,7 @@
     </div>
 
     <div id="app-pdfdec" class="app-container">
-        <div id="map-pdfdec" class="map-canvas" style="height: calc(100vh - 65px);"></div>
+        <div id="map-pdfdec" class="map-canvas"></div>
         
         <div style="position: absolute; top: 12px; right: 15px; z-index: 1005;">
             <button class="btn-action btn-toggle" onclick="basculerInterfacePdf()" id="btn-masquer">👁️ Masquer les outils</button>
@@ -277,11 +296,6 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.1.0/src/leaflet.geometryutil.min.js"></script>
 
     <script>
-        // Liaison Worker PDF.js
-        if (window['pdfjs-dist/build/pdf']) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-        }
-
         // Variables d'état globales
         let currentAppId = 'menu-accueil';
         const tuilesSatelliteUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -290,7 +304,16 @@
         function ouvrirApp(idApp) {
             currentAppId = idApp;
             document.getElementById('menu-accueil').style.display = 'none';
-            document.getElementById(idApp).style.display = 'block';
+            
+            // Masquer d'abord tous les conteneurs pour réinitialiser le comportement flexbox
+            document.getElementById('app-feu').style.display = 'none';
+            document.getElementById('app-coord').style.display = 'none';
+            document.getElementById('app-perim').style.display = 'none';
+            document.getElementById('app-pdfdec').style.display = 'none';
+            
+            // Afficher le conteneur cible en mode flex
+            document.getElementById(idApp).style.display = 'flex';
+            
             setTimeout(() => { 
                 window.dispatchEvent(new Event('resize')); 
                 if (idApp === 'app-feu') mapFeu.invalidateSize();
@@ -410,7 +433,7 @@
         
         function ouvrirGoogleMaps() { 
             if (globalLat && globalLng) {
-                window.open(`https://www.google.com/maps/dir/?api=1&destination=${globalLat},${globalLng}`, '_blank');
+                window.open(`https://maps.google.com/?q=${globalLat},${globalLng}`, '_blank');
             } 
         }
 
@@ -451,7 +474,7 @@
         mapPerim.on('moveend', function() { if (!gpsMarqueur) coordonnesCentrePerim = mapPerim.getCenter(); });
 
 
-        // ================= LOGIQUE APPLI 4 : PERIDECI (PLAN FIXE CORRIGÉ) =================
+        // ================= LOGIQUE APPLI 4 : PERIDECI (PLAN FIXE) =================
         let PIXELS_POUR_2000M = 300; 
         let modeRegleActive = false;
         let interfaceMasquee = false;
@@ -583,37 +606,3 @@
                 pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
                     pdf.getPage(1).then(function(page) {
                         const viewport = page.getViewport({ scale: 2.0 });
-                        const canvas = document.createElement('canvas');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-                        const context = canvas.getContext('2d');
-
-                        page.render({ canvasContext: context, viewport: viewport }).promise.then(function() {
-                            const imgUrl = canvas.toDataURL('image/png');
-                            const h = viewport.height;
-                            const w = viewport.width;
-                            const limitesImage = [[0, 0], [h, w]];
-
-                            currentPlanPdfLayer = L.imageOverlay(imgUrl, limitesImage).addTo(mapPdfDec);
-                            mapPdfDec.fitBounds(limitesImage);
-                            document.getElementById('resultat-mesure').innerText = "Plan PDF chargé. Calibrez l'échelle.";
-                        });
-                    });
-                });
-            };
-            fileReader.readAsArrayBuffer(file);
-        });
-
-        function effacerToutPdfDec() {
-            layerGroupPdfDec.clearLayers();
-            regleGroupPdfDec.clearLayers();
-            if (currentPlanPdfLayer) { mapPdfDec.removeLayer(currentPlanPdfLayer); currentPlanPdfLayer = null; }
-            document.getElementById('resultat-mesure').innerText = "Double-cliquez pour poser les périmètres";
-            pointsMesure = [];
-            modeRegleActive = false;
-            document.getElementById('btn-regle').style.background = '#0284c7';
-            document.getElementById('btn-regle').innerText = "📏 Activer";
-        }
-    </script>
-</body>
-</html>
