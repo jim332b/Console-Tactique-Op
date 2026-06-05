@@ -35,16 +35,23 @@
         
         /* --- MENU D'ACCUEIL --- */
         #menu-accueil {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; gap: 15px;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            height: 100vh; 
+            gap: 15px;
             background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
         }
+        /* Gestion de l'affichage de l'accueil */
+        #menu-accueil.masque { display: none !important; }
+        
         .menu-titre { color: #ffffff; font-size: 26px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .menu-btn {
             width: 320px; padding: 16px; font-size: 15px; font-weight: bold; color: white;
             border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
             transition: transform 0.2s; text-align: left; display: flex; align-items: center; gap: 15px;
-            -webkit-tap-highlight-color: transparent; /* Optimisation tactile */
+            -webkit-tap-highlight-color: transparent;
         }
         .menu-btn:active { transform: scale(0.98); }
         .btn-incendie { background-color: #d9534f; }
@@ -52,9 +59,9 @@
         .btn-perim { background-color: #337ab7; }
         .btn-pdf { background-color: var(--btn-purple); }
 
-        /* --- CONTENEURS DES ECRANS APPLIS (CORRIGÉS POUR TABLETTE) --- */
+        /* --- CONTENEURS DES ECRANS APPLIS (OPTIMISÉS FIREFOX / CHROME / TACTILE) --- */
         .app-container { 
-            display: none; /* Par défaut caché, JS injectera 'flex' proprement */
+            display: none; 
             height: 100vh; 
             width: 100%; 
             position: relative; 
@@ -63,14 +70,18 @@
             justify-content: space-between;
         }
         
-        /* Les cartes prennent automatiquement tout l'espace disponible au-dessus du bouton */
+        /* Classe forcée pour Firefox et Chrome */
+        .app-container.actif {
+            display: flex !important; 
+        }
+        
         .map-canvas { 
             flex-grow: 1;
             width: 100%; 
             background: #222; 
         }
 
-        /* --- LE BOUTON MENU DE RETOUR (SÉCURISÉ) --- */
+        /* --- LE BOUTON MENU DE RETOUR --- */
         .btn-retour {
             width: 100%; 
             height: 65px;
@@ -172,7 +183,7 @@
 </head>
 <body>
 
-    <div id="menu-accueil" style="display: flex;">
+    <div id="menu-accueil">
         <div class="menu-titre">Console Tactique</div>
         <button class="menu-btn btn-incendie" onclick="ouvrirApp('app-feu')">🔥 CALSURFEU</button>
         <button class="menu-btn btn-coord" onclick="ouvrirApp('app-coord')">🌐 LAMBERTMAPS</button>
@@ -295,35 +306,32 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-geometryutil@0.1.0/src/leaflet.geometryutil.min.js"></script>
 
     <script>
-        // Variables d'état globales
         let currentAppId = 'menu-accueil';
         const tuilesSatelliteUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
         const attributionEsri = 'Esri';
 
-        // FONCTION MODIFIÉE ET SÉCURISÉE POUR LE TACTILE TABLETTE
+        // RESOLUTION COMPLETE CHROME + FIREFOX VIA MULTI-TIMING ASYNCHRONE
         function ouvrirApp(idApp) {
             currentAppId = idApp;
             
-            // Masquer l'accueil
-            document.getElementById('menu-accueil').style.setProperty('display', 'none', 'important');
+            // Étape 1 : Masquage et bascule visuelle immédiate
+            document.getElementById('menu-accueil').classList.add('masque');
+            document.querySelectorAll('.app-container').forEach(app => {
+                app.classList.remove('actif');
+            });
             
-            // Masquer d'abord tous les conteneurs d'application proprement
-            document.getElementById('app-feu').style.display = 'none';
-            document.getElementById('app-coord').style.display = 'none';
-            document.getElementById('app-perim').style.display = 'none';
-            document.getElementById('app-pdfdec').style.display = 'none';
+            const appCible = document.getElementById(idApp);
+            appCible.classList.add('actif');
             
-            // Activer l'affichage flex explicitement sur l'appli choisie
-            const cible = document.getElementById(idApp);
-            cible.style.setProperty('display', 'flex', 'important');
-            
-            // Double temporisation cruciale pour le moteur de rendu des tablettes (iPad/Android)
-            setTimeout(() => { 
-                window.dispatchEvent(new Event('resize')); 
-                if (idApp === 'app-feu') mapFeu.invalidateSize(true);
-                if (idApp === 'app-perim') mapPerim.invalidateSize(true);
-                if (idApp === 'app-pdfdec') mapPdfDec.invalidateSize(true);
-            }, 100);
+            // Étape 2 : Double boucle asynchrone conçue spécifiquement pour le moteur Gecko de Firefox
+            requestAnimationFrame(() => {
+                setTimeout(() => { 
+                    window.dispatchEvent(new Event('resize')); 
+                    if (idApp === 'app-feu') { mapFeu.invalidateSize(true); }
+                    if (idApp === 'app-perim') { mapPerim.invalidateSize(true); }
+                    if (idApp === 'app-pdfdec') { mapPdfDec.invalidateSize(true); }
+                }, 80);
+            });
 
             if (idApp === 'app-feu') activerGpsFeu();
             if (idApp === 'app-perim') declencherGpsPerim();
@@ -331,13 +339,15 @@
 
         function retourAccueil() {
             desactiverGpsFeu();
-            document.getElementById('app-feu').style.display = 'none';
-            document.getElementById('app-coord').style.display = 'none';
-            document.getElementById('app-perim').style.display = 'none';
-            document.getElementById('app-pdfdec').style.display = 'none';
+            
+            document.querySelectorAll('.app-container').forEach(app => {
+                app.classList.remove('actif');
+            });
+            
             document.getElementById('zoneResultat').style.display = 'none';
             document.getElementById('btnMaps').style.display = 'none';
-            document.getElementById('menu-accueil').style.setProperty('display', 'flex', 'important');
+            
+            document.getElementById('menu-accueil').classList.remove('masque');
             currentAppId = 'menu-accueil';
         }
 
@@ -437,7 +447,7 @@
         
         function ouvrirGoogleMaps() { 
             if (globalLat && globalLng) {
-                window.open(`http://maps.google.com/?q=${globalLat},${globalLng}`, '_blank');
+                window.open(`maps.google.com{globalLat},${globalLng}`, '_blank');
             } 
         }
 
