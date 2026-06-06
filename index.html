@@ -452,6 +452,15 @@
         function activerGpsFeu() {
             if (watchIdFeu) return; 
             if (!navigator.geolocation) { document.getElementById('feu-status').textContent = "GPS non supporté"; return; }
+            
+            // Forcer une première géolocalisation immédiate au démarrage
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                lastCoordsFeu = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                markerFeu.setLatLng([lastCoordsFeu.lat, lastCoordsFeu.lng]);
+                mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 17);
+                document.getElementById('feu-status').textContent = "GPS OK - Précision: " + Math.round(pos.coords.accuracy) + "m";
+            }, null, { enableHighAccuracy: true });
+
             watchIdFeu = navigator.geolocation.watchPosition(function(pos) {
                 lastCoordsFeu = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 markerFeu.setLatLng([lastCoordsFeu.lat, lastCoordsFeu.lng]);
@@ -460,8 +469,6 @@
                     pathFeu.push(lastCoordsFeu);
                     polylineFeu.setLatLngs(pathFeu.map(p => [p.lat, p.lng]));
                     mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 18);
-                } else if (pathFeu.length === 0) {
-                    mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 17);
                 }
             }, function(err) {
                 document.getElementById('feu-status').textContent = "Signal GPS Indisponible";
@@ -474,6 +481,7 @@
             const btnAction = document.getElementById('feu-btnAction');
             if (!isTracingFeu) {
                 pathFeu = []; polylineFeu.setLatLngs([]); polygonFeu.setLatLngs([]);
+                if (lastCoordsFeu) pathFeu.push(lastCoordsFeu); // Point de départ immédiat
                 isTracingFeu = true; btnAction.textContent = "Arrêter"; btnAction.className = "feu-panel-btn feu-stop";
                 document.getElementById('feu-status').textContent = "Tracé en cours...";
             } else {
@@ -519,6 +527,7 @@
         
         function ouvrirGoogleMaps() { 
             if (globalLat && globalLng) {
+                // CORRECTION ICI : Remplacement du lien erroné par le format d'URL universel Google Maps
                 window.open(`https://www.google.com/maps/dir/?api=1&destination=${globalLat},${globalLng}`, '_blank');
             } 
         }
@@ -747,7 +756,6 @@
                             mapPdfDec.fitBounds(limitesImage);
                             document.getElementById('resultat-mesure').innerText = "Plan PDF chargé. Calibrez l'échelle.";
                             
-                            // Lancement de l'envoi vers Google Drive de manière asynchrone
                             sauvegarderPdfVersDrive(file);
                         });
                     });
@@ -779,7 +787,6 @@
             reader.onload = function(e) {
                 const base64Data = e.target.result.split(',')[1];
                 
-                // Vérification de la présence de l'environnement Google Apps Script
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
                     google.script.run
                         .withSuccessHandler(function(idFichier) {
@@ -788,7 +795,6 @@
                         })
                         .withFailureHandler(function(err) {
                             labelMesure.innerText = "❌ Échec de l'envoi Drive : " + err.message;
-                            console.error(err);
                         })
                         .savePDF(base64Data, file.name);
                 } else {
