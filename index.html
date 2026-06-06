@@ -176,6 +176,7 @@
         .btn-action { padding: 8px 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
         .btn-purple { background: #8b5cf6; color: white; }
         .btn-blue { background: #0284c7; color: white; }
+        .btn-green { background: #16a34a; color: white; }
         .btn-red { background: #b91c1c; color: white; }
         .btn-toggle { background: #374151; color: white; border: 1px solid #4b5563; }
         .select-ui, .input-pixel { background: #333; border: 1px solid #555; color: white; padding: 6px; border-radius: 3px; font-weight: bold; font-size: 11px; }
@@ -183,7 +184,7 @@
         #resultat-mesure { font-weight: bold; color: #38bdf8; font-size: 11px; text-align: center; }
         #file-input { display: none; }
 
-        /* LÉGENDE FLOTTANTE PERIDECI AVEC INDICATEURS DE COULEURS CORRECTS */
+        /* LÉGENDE FLOTTANTE PERIDECI */
         #legende-ops {
             position: absolute; bottom: 20px; right: 15px; z-index: 1010;
             background: rgba(15, 15, 15, 0.92); padding: 8px 12px; border-radius: 6px;
@@ -296,14 +297,15 @@
                 
                 <div class="outils-row" style="border-top: 1px solid #333; padding-top: 6px;">
                     <div class="flex-group">
-                        <span style="font-size:11px; color:#aaa;">Règle :</span>
+                        <span style="font-size:11px; color:#aaa;">Outils :</span>
                         <select id="select-distance" class="select-ui">
                             <option value="400">400 m</option>
                             <option value="1000">1 km</option>
                             <option value="2000" selected>2 km (Carré DFCI)</option>
                             <option value="4000">4 km</option>
                         </select>
-                        <button id="btn-regle" class="btn-action btn-blue" onclick="basculerModeRegle()">📏 Activer</button>
+                        <button id="btn-regle" class="btn-action btn-blue" onclick="basculerModeRegle()">📏 Calibrer</button>
+                        <button id="btn-route" class="btn-action btn-green" onclick="basculerModeRoute()">🛣️ Mesurer Route</button>
                     </div>
                     
                     <div class="flex-group">
@@ -334,11 +336,8 @@
 
         function ouvrirApp(idApp) {
             currentAppId = idApp;
-            
             document.getElementById('menu-accueil').classList.add('masque');
-            document.querySelectorAll('.app-container').forEach(app => {
-                app.classList.remove('actif');
-            });
+            document.querySelectorAll('.app-container').forEach(app => app.classList.remove('actif'));
             
             const appCible = document.getElementById(idApp);
             appCible.classList.add('actif');
@@ -358,14 +357,9 @@
 
         function retourAccueil() {
             desactiverGpsFeu();
-            
-            document.querySelectorAll('.app-container').forEach(app => {
-                app.classList.remove('actif');
-            });
-            
+            document.querySelectorAll('.app-container').forEach(app => app.classList.remove('actif'));
             document.getElementById('zoneResultat').style.display = 'none';
             document.getElementById('btnMaps').style.display = 'none';
-            
             document.getElementById('menu-accueil').classList.remove('masque');
             currentAppId = 'menu-accueil';
         }
@@ -510,8 +504,11 @@
         // ================= LOGIQUE APPLI 4 : PERIDECI (PLAN FIXE) =================
         let PIXELS_POUR_2000M = 300; 
         let modeRegleActive = false;
+        let modeRouteActive = false;
         let interfaceMasquee = false;
+        
         let pointsMesure = [];
+        let pointsRoute = [];
 
         const mapPdfDec = L.map('map-pdfdec', {
             crs: L.CRS.Simple,
@@ -525,14 +522,21 @@
 
         const layerGroupPdfDec = L.featureGroup().addTo(mapPdfDec);
         const regleGroupPdfDec = L.featureGroup().addTo(mapPdfDec);
+        const routeGroupPdfDec = L.featureGroup().addTo(mapPdfDec);
         let currentPlanPdfLayer = null;
+        let polylineRoute = null;
 
         function metreEnUnites(metres) {
             return (metres * PIXELS_POUR_2000M) / 2000;
         }
 
+        function unitesEnMetres(pixels) {
+            return (pixels * 2000) / PIXELS_POUR_2000M;
+        }
+
         function mettreAJourEchelleDirecte(nouvelleValeur) {
             PIXELS_POUR_2000M = parseFloat(nouvelleValeur) || 300;
+            recalculerDistanceRoute();
         }
 
         function basculerInterfacePdf() {
@@ -541,65 +545,102 @@
             const btn = document.getElementById('btn-masquer');
             
             if (interfaceMasquee) {
-                bandeau.style.opacity = '0';
-                bandeau.style.pointerEvents = 'none';
-                btn.innerText = "👁️ Afficher les outils";
-                btn.style.background = "#8b5cf6";
+                bandeau.style.opacity = '0'; bandeau.style.pointerEvents = 'none';
+                btn.innerText = "👁️ Afficher les outils"; btn.style.background = "#8b5cf6";
             } else {
-                bandeau.style.opacity = '1';
-                bandeau.style.pointerEvents = 'auto';
-                btn.innerText = "👁️ Masquer les outils";
-                btn.style.background = "#374151";
+                bandeau.style.opacity = '1'; bandeau.style.pointerEvents = 'auto';
+                btn.innerText = "👁️ Masquer les outils"; btn.style.background = "#374151";
             }
         }
 
         function basculerModeRegle() {
+            if (modeRouteActive) basculerModeRoute(); // Désactive l'autre mode si actif
             modeRegleActive = !modeRegleActive;
             const btn = document.getElementById('btn-regle');
             const divResultat = document.getElementById('resultat-mesure');
             
             if (modeRegleActive) {
-                btn.style.background = '#eab308';
-                btn.innerText = "🛑 Règle Active";
+                btn.style.background = '#eab308'; btn.innerText = "🛑 Règle Active";
                 divResultat.innerText = "Sélectionnez vos 2 points sur la carte...";
-                pointsMesure = [];
-                regleGroupPdfDec.clearLayers();
+                pointsMesure = []; regleGroupPdfDec.clearLayers();
             } else {
-                btn.style.background = '#0284c7';
-                btn.innerText = "📏 Activer";
+                btn.style.background = '#0284c7'; btn.innerText = "📏 Calibrer";
                 divResultat.innerText = "Double-cliquez pour poser les périmètres";
                 regleGroupPdfDec.clearLayers();
             }
         }
 
-        // Mode Règle de Calibration d'Échelle PERIDECI
+        function basculerModeRoute() {
+            if (modeRegleActive) basculerModeRegle(); // Désactive l'autre mode si actif
+            modeRouteActive = !modeRouteActive;
+            const btn = document.getElementById('btn-route');
+            const divResultat = document.getElementById('resultat-mesure');
+            
+            if (modeRouteActive) {
+                btn.style.background = '#eab308'; btn.innerText = "🛑 Arrêter Route";
+                divResultat.innerText = "Cliquez le long de la route pour mesurer...";
+                pointsRoute = []; routeGroupPdfDec.clearLayers();
+                polylineRoute = L.polyline([], { color: '#16a34a', weight: 4 }).addTo(routeGroupPdfDec);
+            } else {
+                btn.style.background = '#16a34a'; btn.innerText = "🛣️ Mesurer Route";
+                divResultat.innerText = "Double-cliquez pour poser les périmètres";
+            }
+        }
+
+        // Système d'écoute des Clicks (Règle OU Mesure routière multicritère)
         mapPdfDec.on('click', function(e) {
-            if (currentAppId !== 'app-pdfdec' || !modeRegleActive) return;
+            if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer) return;
 
-            pointsMesure.push(e.latlng);
-            L.circleMarker(e.latlng, { radius: 4, color: '#eab308', fillColor: '#fff', fillOpacity: 1 }).addTo(regleGroupPdfDec);
+            // 1. Mode Règle de Calibration
+            if (modeRegleActive) {
+                pointsMesure.push(e.latlng);
+                L.circleMarker(e.latlng, { radius: 4, color: '#eab308', fillColor: '#fff', fillOpacity: 1 }).addTo(regleGroupPdfDec);
 
-            if (pointsMesure.length === 2) {
-                const dx = pointsMesure[1].lng - pointsMesure[0].lng;
-                const dy = pointsMesure[1].lat - pointsMesure[0].lat;
-                const distancePixels = Math.sqrt(dx * dx + dy * dy);
-                const distanceCibleMetres = parseFloat(document.getElementById('select-distance').value);
-                const etalonCalcule = Math.round((distancePixels / distanceCibleMetres) * 2000);
+                if (pointsMesure.length === 2) {
+                    const dx = pointsMesure[1].lng - pointsMesure[0].lng;
+                    const dy = pointsMesure[1].lat - pointsMesure[0].lat;
+                    const distancePixels = Math.sqrt(dx * dx + dy * dy);
+                    const distanceCibleMetres = parseFloat(document.getElementById('select-distance').value);
+                    const etalonCalcule = Math.round((distancePixels / distanceCibleMetres) * 2000);
 
-                L.polyline(pointsMesure, { color: '#eab308', weight: 3, dashArray: '4, 4' }).addTo(regleGroupPdfDec);
-                document.getElementById('resultat-mesure').innerText = `Échelle étalonnée : ${etalonCalcule} px`;
-                document.getElementById('input-scale').value = etalonCalcule;
-                PIXELS_POUR_2000M = etalonCalcule;
+                    L.polyline(pointsMesure, { color: '#eab308', weight: 3, dashArray: '4, 4' }).addTo(regleGroupPdfDec);
+                    document.getElementById('resultat-mesure').innerText = `Échelle étalonnée : ${etalonCalcule} px`;
+                    document.getElementById('input-scale').value = etalonCalcule;
+                    PIXELS_POUR_2000M = etalonCalcule;
+                    basculerModeRegle();
+                }
+                return;
+            }
 
-                modeRegleActive = false;
-                document.getElementById('btn-regle').style.background = '#0284c7';
-                document.getElementById('btn-regle').innerText = "📏 Activer";
+            // 2. Mode Mesure de Route multipoints
+            if (modeRouteActive) {
+                pointsRoute.push(e.latlng);
+                L.circleMarker(e.latlng, { radius: 5, color: '#16a34a', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(routeGroupPdfDec);
+                
+                polylineRoute.setLatLngs(pointsRoute);
+                recalculerDistanceRoute();
+                return;
             }
         });
 
+        function recalculerDistanceRoute() {
+            if (pointsRoute.length < 2) return;
+            let distancePixelsCumulee = 0;
+            
+            for (let i = 0; i < pointsRoute.length - 1; i++) {
+                const dx = pointsRoute[i+1].lng - pointsRoute[i].lng;
+                const dy = pointsRoute[i+1].lat - pointsRoute[i].lat;
+                distancePixelsCumulee += Math.sqrt(dx * dx + dy * dy);
+            }
+            
+            const distanceMetres = unitesEnMetres(distancePixelsCumulee);
+            const affichage = distanceMetres > 1000 ? (distanceMetres / 1000).toFixed(2) + " km" : Math.round(distanceMetres) + " m";
+            document.getElementById('resultat-mesure').innerText = `Distance itinéraire : ${affichage} (${pointsRoute.length} pts)`;
+        }
+
         // Tracé exclusif des Cercles Tactiques Épais et en Pointillés (Sans texte)
         mapPdfDec.on('dblclick', function(e) {
-            if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer || modeRegleActive) return;
+            if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer || modeRegleActive || modeRouteActive) return;
 
             layerGroupPdfDec.clearLayers();
             const pointCentral = e.latlng;
@@ -614,8 +655,6 @@
 
             configurations.forEach(config => {
                 const rayonUnites = metreEnUnites(config.rayon);
-                
-                // Tracé en pointillés épais (weight: 8, dashArray: '10, 15')
                 L.circle(pointCentral, {
                     radius: rayonUnites,
                     color: config.couleur,
@@ -626,17 +665,15 @@
                 }).addTo(layerGroupPdfDec);
             });
 
-            // Repère central d'épicentre
             L.circleMarker(pointCentral, { radius: 5, color: '#fff', fillColor: '#000', fillOpacity: 1, weight: 2 }).addTo(layerGroupPdfDec);
         });
 
-        // Module de décodage et chargement de la Dalle PDF via FileReader
+        // Module de chargement du PDF via FileReader
         document.getElementById('file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             effacerToutPdfDec();
-
             const fileReader = new FileReader();
             fileReader.onload = function() {
                 const typedarray = new Uint8Array(this.result);
@@ -644,14 +681,12 @@
                     pdf.getPage(1).then(function(page) {
                         const viewport = page.getViewport({ scale: 2.0 });
                         const canvas = document.createElement('canvas');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
+                        canvas.height = viewport.height; canvas.width = viewport.width;
                         const context = canvas.getContext('2d');
 
                         page.render({ canvasContext: context, viewport: viewport }).promise.then(function() {
                             const imgUrl = canvas.toDataURL('image/png');
-                            const h = viewport.height;
-                            const w = viewport.width;
+                            const h = viewport.height; const w = viewport.width;
                             const limitesImage = [[0, 0], [h, w]];
 
                             currentPlanPdfLayer = L.imageOverlay(imgUrl, limitesImage).addTo(mapPdfDec);
@@ -667,12 +702,14 @@
         function effacerToutPdfDec() {
             layerGroupPdfDec.clearLayers();
             regleGroupPdfDec.clearLayers();
+            routeGroupPdfDec.clearLayers();
+            pointsMesure = []; pointsRoute = [];
+            
+            if (modeRegleActive) basculerModeRegle();
+            if (modeRouteActive) basculerModeRoute();
             if (currentPlanPdfLayer) { mapPdfDec.removeLayer(currentPlanPdfLayer); currentPlanPdfLayer = null; }
+            
             document.getElementById('resultat-mesure').innerText = "Double-cliquez pour poser les périmètres";
-            pointsMesure = [];
-            modeRegleActive = false;
-            document.getElementById('btn-regle').style.background = '#0284c7';
-            document.getElementById('btn-regle').innerText = "📏 Activer";
         }
     </script>
 </body>
