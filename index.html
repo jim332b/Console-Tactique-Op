@@ -598,7 +598,6 @@
             recalculerDistanceRoute();
         }
 
-        // Bascule de l'interface via le bouton de la barre latérale
         function basculerInterfacePdf() {
             interfaceMasquee = !interfaceMasquee;
             const blocOutils = document.getElementById('bloc-outils-pdf');
@@ -747,6 +746,9 @@
                             currentPlanPdfLayer = L.imageOverlay(imgUrl, limitesImage).addTo(mapPdfDec);
                             mapPdfDec.fitBounds(limitesImage);
                             document.getElementById('resultat-mesure').innerText = "Plan PDF chargé. Calibrez l'échelle.";
+                            
+                            // Lancement de l'envoi vers Google Drive de manière asynchrone
+                            sauvegarderPdfVersDrive(file);
                         });
                     });
                 });
@@ -765,6 +767,36 @@
             if (currentPlanPdfLayer) { mapPdfDec.removeLayer(currentPlanPdfLayer); currentPlanPdfLayer = null; }
             
             document.getElementById('resultat-mesure').innerText = "Double-cliquez pour poser les périmètres";
+        }
+
+        // ================= CONNEXION GOOGLE APPS SCRIPT =================
+        function sauvegarderPdfVersDrive(file) {
+            const labelMesure = document.getElementById('resultat-mesure');
+            const texteOrigine = labelMesure.innerText;
+            labelMesure.innerText = "⏳ Enregistrement du PDF dans Google Drive...";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result.split(',')[1];
+                
+                // Vérification de la présence de l'environnement Google Apps Script
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(function(idFichier) {
+                            labelMesure.innerText = "✅ PDF sauvegardé sur Drive (ID : " + idFichier + ")";
+                            setTimeout(() => { labelMesure.innerText = texteOrigine; }, 4000);
+                        })
+                        .withFailureHandler(function(err) {
+                            labelMesure.innerText = "❌ Échec de l'envoi Drive : " + err.message;
+                            console.error(err);
+                        })
+                        .savePDF(base64Data, file.name);
+                } else {
+                    labelMesure.innerText = "⚠️ Mode local détecté (Pas de connexion Drive)";
+                    setTimeout(() => { labelMesure.innerText = texteOrigine; }, 3000);
+                }
+            };
+            reader.readAsDataURL(file);
         }
     </script>
 </body>
