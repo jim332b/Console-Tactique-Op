@@ -183,14 +183,15 @@
         #resultat-mesure { font-weight: bold; color: #38bdf8; font-size: 11px; text-align: center; }
         #file-input { display: none; }
 
-        /* LÉGENDE FLOTTANTE PERIDECI */
+        /* LÉGENDE FLOTTANTE PERIDECI AVEC INDICATEURS DE COULEURS CORRECTS */
         #legende-ops {
             position: absolute; bottom: 20px; right: 15px; z-index: 1010;
-            background: rgba(20, 20, 20, 0.9); padding: 8px 12px; border-radius: 6px;
+            background: rgba(15, 15, 15, 0.92); padding: 8px 12px; border-radius: 6px;
             border: 1px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            display: flex; flex-direction: column; gap: 4px; width: 85px; font-size: 10px; font-weight: bold;
+            display: flex; flex-direction: column; gap: 5px; width: 85px; font-size: 11px; font-weight: bold;
         }
-        .legende-item { display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; border-radius: 3px; color: black; font-weight: bold; }
+        .legende-item { display: flex; align-items: center; gap: 8px; color: #ffffff; }
+        .legende-couleur { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
 
         .leaflet-bottom.leaflet-left .leaflet-control-zoom { margin-bottom: 10px; }
     </style>
@@ -313,11 +314,11 @@
             </div>
 
             <div id="legende-ops">
-                <div class="legende-item" style="background: #ff5252;"><span>200 m</span></div>
-                <div class="legende-item" style="background: #ffab40;"><span>400 m</span></div>
-                <div class="legende-item" style="background: #ffd740;"><span>1 km</span></div>
-                <div class="legende-item" style="background: #29b6f6; color: white;"><span>2 km</span></div>
-                <div class="legende-item" style="background: #66bb6a;"><span>4 km</span></div>
+                <div class="legende-item"><span class="legende-couleur" style="background: #ff5252;"></span><span>200 m</span></div>
+                <div class="legende-item"><span class="legende-couleur" style="background: #ffab40;"></span><span>400 m</span></div>
+                <div class="legende-item"><span class="legende-couleur" style="background: #ffd740;"></span><span>1 km</span></div>
+                <div class="legende-item"><span class="legende-couleur" style="background: #29b6f6;"></span><span>2 km</span></div>
+                <div class="legende-item"><span class="legende-couleur" style="background: #66bb6a;"></span><span>4 km</span></div>
             </div>
         </div>
     </div>
@@ -596,7 +597,7 @@
             }
         });
 
-        // Tracé exclusif des Cercles Tactiques Épais (Sans texte / Identification par la légende)
+        // Tracé exclusif des Cercles Tactiques Épais et en Pointillés (Sans texte)
         mapPdfDec.on('dblclick', function(e) {
             if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer || modeRegleActive) return;
 
@@ -614,13 +615,14 @@
             configurations.forEach(config => {
                 const rayonUnites = metreEnUnites(config.rayon);
                 
-                // Tracé du cercle épais (weight: 8) pour une parfaite visibilité sur fond topographique
+                // Tracé en pointillés épais (weight: 8, dashArray: '10, 15')
                 L.circle(pointCentral, {
                     radius: rayonUnites,
                     color: config.couleur,
                     weight: 8,
+                    dashArray: '10, 15', 
                     fillColor: config.couleur,
-                    fillOpacity: 0.02
+                    fillOpacity: 0.01
                 }).addTo(layerGroupPdfDec);
             });
 
