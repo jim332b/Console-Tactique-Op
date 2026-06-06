@@ -2,7 +2,6 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,6 +11,7 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
@@ -163,7 +163,7 @@
         .main-btn { padding: 6px 10px; cursor: pointer; background: #337ab7; color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .debug-lbl { font-size: 11px; color: #337ab7; font-weight: bold; }
 
-        /* App 4 : PERIDECI SPECIFIC UI */
+        /* App 4 : PERIDECI INTERFACE */
         #top-interface-pdf {
             position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;
             background: rgba(25, 25, 25, 0.96); color: white; padding: 10px; 
@@ -190,22 +190,7 @@
             border: 1px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             display: flex; flex-direction: column; gap: 4px; width: 85px; font-size: 10px; font-weight: bold;
         }
-        .legende-item { display: flex; align-items: center; justify-content: space-between; padding: 2px 5px; border-radius: 3px; color: black; }
-
-        /* ÉTIQUETTES DE DISTANCE AUX POINTS CARDINAUX */
-        .cercle-distance-label {
-            background: rgba(15, 23, 42, 0.9) !important;
-            border: none !important;
-            color: #ffffff !important;
-            font-weight: bold !important;
-            font-size: 11px !important;
-            padding: 1px 5px !important;
-            border-radius: 3px !important;
-            white-space: nowrap;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.5);
-        }
-        .cercle-distance-label::before { display: none !important; }
+        .legende-item { display: flex; align-items: center; justify-content: space-between; padding: 3px 6px; border-radius: 3px; color: black; font-weight: bold; }
 
         .leaflet-bottom.leaflet-left .leaflet-control-zoom { margin-bottom: 10px; }
     </style>
@@ -305,7 +290,7 @@
                         <input type="file" id="file-input" accept="application/pdf">
                         <button class="btn-action btn-red" onclick="effacerToutPdfDec()">❌ Effacer</button>
                     </div>
-                    <div id="resultat-mesure">Double-cliquez sur le PDF pour les périmètres</div>
+                    <div id="resultat-mesure">Double-cliquez sur le PDF pour générer les périmètres</div>
                 </div>
                 
                 <div class="outils-row" style="border-top: 1px solid #333; padding-top: 6px;">
@@ -475,12 +460,12 @@
                 document.getElementById('gpsDisplay').innerText = `${globalLat} , ${globalLng}`;
                 document.getElementById('zoneResultat').style.display = 'block';
                 document.getElementById('btnMaps').style.display = 'block';
-            } catch (e) { alert("Erreur de projection Lambert"); }
+            } catch (e) { alert("Erreur lors de la conversion Lambert."); }
         }
         
         function ouvrirGoogleMaps() { 
             if (globalLat && globalLng) {
-                window.open(`maps.google.com{globalLat},${globalLng}`, '_blank');
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${globalLat},${globalLng}`, '_blank');
             } 
         }
 
@@ -586,7 +571,7 @@
             }
         }
 
-        // Mode Calibration d'Échelle PERIDECI
+        // Mode Règle de Calibration d'Échelle PERIDECI
         mapPdfDec.on('click', function(e) {
             if (currentAppId !== 'app-pdfdec' || !modeRegleActive) return;
 
@@ -611,7 +596,7 @@
             }
         });
 
-        // Tracé des cercles PERIDECI avec distances aux 4 points cardinaux (N, S, E, O)
+        // Tracé exclusif des Cercles Tactiques Épais (Sans texte / Identification par la légende)
         mapPdfDec.on('dblclick', function(e) {
             if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer || modeRegleActive) return;
 
@@ -619,51 +604,31 @@
             const pointCentral = e.latlng;
 
             const configurations = [
-                { rayon: 200, couleur: '#ff5252', texte: "200 m" },
-                { rayon: 400, couleur: '#ffab40', texte: "400 m" },
-                { rayon: 1000, couleur: '#ffd740', texte: "1 km" },
-                { rayon: 2000, couleur: '#29b6f6', texte: "2 km" },
-                { rayon: 4000, couleur: '#66bb6a', texte: "4 km" }
+                { rayon: 200, couleur: '#ff5252' },
+                { rayon: 400, couleur: '#ffab40' },
+                { rayon: 1000, couleur: '#ffd740' },
+                { rayon: 2000, couleur: '#29b6f6' },
+                { rayon: 4000, couleur: '#66bb6a' }
             ];
 
             configurations.forEach(config => {
                 const rayonUnites = metreEnUnites(config.rayon);
                 
-                // 1. Tracé du cercle opérationnel principal
+                // Tracé du cercle épais (weight: 8) pour une parfaite visibilité sur fond topographique
                 L.circle(pointCentral, {
                     radius: rayonUnites,
                     color: config.couleur,
-                    weight: 3,
+                    weight: 8,
                     fillColor: config.couleur,
-                    fillOpacity: 0.04,
-                    dashArray: '5, 5'
+                    fillOpacity: 0.02
                 }).addTo(layerGroupPdfDec);
-
-                // 2. Définition des coordonnées géométriques des 4 points cardinaux
-                const pointsCardinaux = [
-                    { latlng: [pointCentral.lat + rayonUnites, pointCentral.lng] }, // Nord
-                    { latlng: [pointCentral.lat - rayonUnites, pointCentral.lng] }, // Sud
-                    { latlng: [pointCentral.lat, pointCentral.lng + rayonUnites] }, // Est
-                    { latlng: [pointCentral.lat, pointCentral.lng - rayonUnites] }  // Ouest
-                ];
-
-                // 3. Implantation des étiquettes masquées sur les lignes
-                pointsCardinaux.forEach(pt => {
-                    L.marker(pt.latlng, { opacity: 0 })
-                        .addTo(layerGroupPdfDec)
-                        .bindTooltip(config.texte, {
-                            permanent: true,
-                            direction: 'center', // Fixe l'étiquette parfaitement alignée sur l'axe du trait
-                            className: 'cercle-distance-label'
-                        }).openTooltip();
-                });
             });
 
-            // Point central (Épicentre du quadrillage)
+            // Repère central d'épicentre
             L.circleMarker(pointCentral, { radius: 5, color: '#fff', fillColor: '#000', fillOpacity: 1, weight: 2 }).addTo(layerGroupPdfDec);
         });
 
-        // Module de chargement PDF
+        // Module de décodage et chargement de la Dalle PDF via FileReader
         document.getElementById('file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
