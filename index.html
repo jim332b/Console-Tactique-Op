@@ -88,35 +88,69 @@
             background: #222; 
         }
 
-        /* --- BOUTON RETOUR VERTICAL GAUCHE --- */
-        .btn-retour {
-            width: 50px; 
+        /* --- COLONNE RETOUR & INTERRUPTEURS LATERAUX GAUCHE --- */
+        .sidebar-left {
+            width: 50px;
             min-width: 50px;
             height: 100vh;
-            z-index: 5000; 
-            background: #222222; 
-            color: white; 
-            border: none;
-            border-right: 1px solid #333; 
-            font-weight: bold; 
-            font-size: 14px;
-            cursor: pointer; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-            display: flex; 
-            align-items: center; 
-            justify-content: center;
+            z-index: 5000;
+            background: #222222;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
             box-sizing: border-box;
+        }
+
+        .btn-retour-bloc {
+            width: 100%;
+            flex-grow: 1;
+            color: white;
+            border: none;
+            background: transparent;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             -webkit-tap-highlight-color: transparent;
             padding: 5px;
         }
-        .btn-retour:active { background: #333333; }
-        
-        .btn-retour span {
+        .btn-retour-bloc:active { background: #333333; }
+        .btn-retour-bloc span {
             writing-mode: vertical-lr;
             transform: rotate(180deg);
             white-space: nowrap;
             display: inline-block;
+        }
+
+        /* Bouton spécifique masquage latéral */
+        .btn-masquer-lateral {
+            width: 100%;
+            height: 180px;
+            background: #374151;
+            color: white;
+            border: none;
+            border-bottom: 1px solid #4b5563;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .btn-masquer-lateral:active { background: #4b5563; }
+        .btn-masquer-lateral span {
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            white-space: nowrap;
         }
 
         /* --- PANNEAUX DE COMMANDES INTERNES --- */
@@ -169,19 +203,35 @@
             background: rgba(25, 25, 25, 0.96); color: white; padding: 10px; 
             border-radius: 8px; border: 1px solid #333;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-size: 13px;
-            transition: all 0.3s ease; width: auto;
+            box-sizing: border-box; width: auto;
         }
         .outils-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+        
+        /* Séparation du bandeau d'outils basculable */
+        #bloc-outils-pdf {
+            transition: all 0.25s ease-in-out;
+            max-height: 200px;
+            opacity: 1;
+            overflow: hidden;
+        }
+        #bloc-outils-pdf.masque-interne {
+            max-height: 0px !important;
+            opacity: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+        }
+
         .flex-group { display: flex; gap: 6px; align-items: center; }
         .btn-action { padding: 8px 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
         .btn-purple { background: #8b5cf6; color: white; }
         .btn-blue { background: #0284c7; color: white; }
         .btn-green { background: #16a34a; color: white; }
         .btn-red { background: #b91c1c; color: white; }
-        .btn-toggle { background: #374151; color: white; border: 1px solid #4b5563; }
+        
         .select-ui, .input-pixel { background: #333; border: 1px solid #555; color: white; padding: 6px; border-radius: 3px; font-weight: bold; font-size: 11px; }
         .input-pixel { width: 55px; text-align: center; }
-        #resultat-mesure { font-weight: bold; color: #38bdf8; font-size: 11px; text-align: center; }
+        #resultat-mesure { font-weight: bold; color: #38bdf8; font-size: 13px; text-align: center; padding: 2px 0; }
         #file-input { display: none; }
 
         /* LÉGENDE FLOTTANTE PERIDECI */
@@ -208,7 +258,9 @@
     </div>
 
     <div id="app-feu" class="app-container">
-        <button class="btn-retour" onclick="reinitialiserEtRetour()"><span>⬅️ Menu Principal</span></button>
+        <div class="sidebar-left">
+            <button class="btn-retour-bloc" onclick="reinitialiserEtRetour()"><span>⬅️ Menu Principal</span></button>
+        </div>
         <div class="app-content-wrapper">
             <div id="map-feu" class="map-canvas"></div>
             <div id="panel-feu" class="panel-ops">
@@ -226,7 +278,9 @@
     </div>
 
     <div id="app-coord" class="app-container">
-        <button class="btn-retour" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        <div class="sidebar-left">
+            <button class="btn-retour-bloc" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        </div>
         <div class="app-content-wrapper">
             <div id="container-coord">
                 <div class="panel-coord-pure">
@@ -253,7 +307,9 @@
     </div>
 
     <div id="app-perim" class="app-container">
-        <button class="btn-retour" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        <div class="sidebar-left">
+            <button class="btn-retour-bloc" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        </div>
         <div class="app-content-wrapper">
             <div id="map-perim" class="map-canvas"></div>
             <div id="panel-perim" class="panel-ops">
@@ -277,40 +333,43 @@
     </div>
 
     <div id="app-pdfdec" class="app-container">
-        <button class="btn-retour" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        <div class="sidebar-left">
+            <button class="btn-masquer-lateral" onclick="basculerInterfacePdf()" id="btn-masquer"><span>👁️ Masquer Outils</span></button>
+            <button class="btn-retour-bloc" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+        </div>
+        
         <div class="app-content-wrapper">
             <div id="map-pdfdec" class="map-canvas"></div>
             
-            <div style="position: absolute; top: 12px; right: 15px; z-index: 1005;">
-                <button class="btn-action btn-toggle" onclick="basculerInterfacePdf()" id="btn-masquer">👁️ Masquer les outils</button>
-            </div>
-
             <div id="top-interface-pdf">
-                <div class="outils-row" style="margin-bottom: 6px;">
-                    <div class="flex-group">
-                        <button class="btn-action btn-purple" onclick="document.getElementById('file-input').click()">📁 Dalle PDF</button>
-                        <input type="file" id="file-input" accept="application/pdf">
-                        <button class="btn-action btn-red" onclick="effacerToutPdfDec()">❌ Effacer</button>
-                    </div>
-                    <div id="resultat-mesure">Double-cliquez sur le PDF pour générer les périmètres</div>
-                </div>
+                <div id="resultat-mesure">Double-cliquez sur le PDF pour générer les périmètres</div>
                 
-                <div class="outils-row" style="border-top: 1px solid #333; padding-top: 6px;">
-                    <div class="flex-group">
-                        <span style="font-size:11px; color:#aaa;">Outils :</span>
-                        <select id="select-distance" class="select-ui">
-                            <option value="400">400 m</option>
-                            <option value="1000">1 km</option>
-                            <option value="2000" selected>2 km (Carré DFCI)</option>
-                            <option value="4000">4 km</option>
-                        </select>
-                        <button id="btn-regle" class="btn-action btn-blue" onclick="basculerModeRegle()">📏 Calibrer</button>
-                        <button id="btn-route" class="btn-action btn-green" onclick="basculerModeRoute()">🛣️ Mesurer Route</button>
+                <div id="bloc-outils-pdf" style="margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
+                    <div class="outils-row" style="margin-bottom: 8px;">
+                        <div class="flex-group">
+                            <button class="btn-action btn-purple" onclick="document.getElementById('file-input').click()">📁 Dalle PDF</button>
+                            <input type="file" id="file-input" accept="application/pdf">
+                            <button class="btn-action btn-red" onclick="effacerToutPdfDec()">❌ Effacer</button>
+                        </div>
                     </div>
                     
-                    <div class="flex-group">
-                        <span style="font-size:11px; color:#aaa;">Échelle :</span>
-                        <input type="number" id="input-scale" class="input-pixel" value="300" onchange="mettreAJourEchelleDirecte(this.value)"> <span style="font-size:11px; color:#aaa;">px pour 2km</span>
+                    <div class="outils-row">
+                        <div class="flex-group">
+                            <span style="font-size:11px; color:#aaa;">Outils :</span>
+                            <select id="select-distance" class="select-ui">
+                                <option value="400">400 m</option>
+                                <option value="1000">1 km</option>
+                                <option value="2000" selected>2 km (Carré DFCI)</option>
+                                <option value="4000">4 km</option>
+                            </select>
+                            <button id="btn-regle" class="btn-action btn-blue" onclick="basculerModeRegle()">📏 Calibrer</button>
+                            <button id="btn-route" class="btn-action btn-green" onclick="basculerModeRoute()">🛣️ Mesurer Route</button>
+                        </div>
+                        
+                        <div class="flex-group">
+                            <span style="font-size:11px; color:#aaa;">Échelle :</span>
+                            <input type="number" id="input-scale" class="input-pixel" value="300" onchange="mettreAJourEchelleDirecte(this.value)"> <span style="font-size:11px; color:#aaa;">px pour 2km</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -539,22 +598,25 @@
             recalculerDistanceRoute();
         }
 
+        // Bascule de l'interface via le bouton de la barre latérale
         function basculerInterfacePdf() {
             interfaceMasquee = !interfaceMasquee;
-            const bandeau = document.getElementById('top-interface-pdf');
+            const blocOutils = document.getElementById('bloc-outils-pdf');
             const btn = document.getElementById('btn-masquer');
             
             if (interfaceMasquee) {
-                bandeau.style.opacity = '0'; bandeau.style.pointerEvents = 'none';
-                btn.innerText = "👁️ Afficher les outils"; btn.style.background = "#8b5cf6";
+                blocOutils.classList.add('masque-interne');
+                btn.innerHTML = "<span>👁️ Afficher Outils</span>";
+                btn.style.background = "#8b5cf6";
             } else {
-                bandeau.style.opacity = '1'; bandeau.style.pointerEvents = 'auto';
-                btn.innerText = "👁️ Masquer les outils"; btn.style.background = "#374151";
+                blocOutils.classList.remove('masque-interne');
+                btn.innerHTML = "<span>👁️ Masquer Outils</span>";
+                btn.style.background = "#374151";
             }
         }
 
         function basculerModeRegle() {
-            if (modeRouteActive) basculerModeRoute(); // Désactive l'autre mode si actif
+            if (modeRouteActive) basculerModeRoute();
             modeRegleActive = !modeRegleActive;
             const btn = document.getElementById('btn-regle');
             const divResultat = document.getElementById('resultat-mesure');
@@ -571,7 +633,7 @@
         }
 
         function basculerModeRoute() {
-            if (modeRegleActive) basculerModeRegle(); // Désactive l'autre mode si actif
+            if (modeRegleActive) basculerModeRegle();
             modeRouteActive = !modeRouteActive;
             const btn = document.getElementById('btn-route');
             const divResultat = document.getElementById('resultat-mesure');
@@ -587,11 +649,9 @@
             }
         }
 
-        // Système d'écoute des Clicks (Règle OU Mesure routière multicritère)
         mapPdfDec.on('click', function(e) {
             if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer) return;
 
-            // 1. Mode Règle de Calibration
             if (modeRegleActive) {
                 pointsMesure.push(e.latlng);
                 L.circleMarker(e.latlng, { radius: 4, color: '#eab308', fillColor: '#fff', fillOpacity: 1 }).addTo(regleGroupPdfDec);
@@ -612,7 +672,6 @@
                 return;
             }
 
-            // 2. Mode Mesure de Route multipoints
             if (modeRouteActive) {
                 pointsRoute.push(e.latlng);
                 L.circleMarker(e.latlng, { radius: 5, color: '#16a34a', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(routeGroupPdfDec);
@@ -626,19 +685,16 @@
         function recalculerDistanceRoute() {
             if (pointsRoute.length < 2) return;
             let distancePixelsCumulee = 0;
-            
             for (let i = 0; i < pointsRoute.length - 1; i++) {
                 const dx = pointsRoute[i+1].lng - pointsRoute[i].lng;
                 const dy = pointsRoute[i+1].lat - pointsRoute[i].lat;
                 distancePixelsCumulee += Math.sqrt(dx * dx + dy * dy);
             }
-            
             const distanceMetres = unitesEnMetres(distancePixelsCumulee);
             const affichage = distanceMetres > 1000 ? (distanceMetres / 1000).toFixed(2) + " km" : Math.round(distanceMetres) + " m";
             document.getElementById('resultat-mesure').innerText = `Distance itinéraire : ${affichage} (${pointsRoute.length} pts)`;
         }
 
-        // Tracé exclusif des Cercles Tactiques Épais et en Pointillés (Sans texte)
         mapPdfDec.on('dblclick', function(e) {
             if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer || modeRegleActive || modeRouteActive) return;
 
@@ -668,7 +724,6 @@
             L.circleMarker(pointCentral, { radius: 5, color: '#fff', fillColor: '#000', fillOpacity: 1, weight: 2 }).addTo(layerGroupPdfDec);
         });
 
-        // Module de chargement du PDF via FileReader
         document.getElementById('file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
