@@ -255,6 +255,17 @@
             #panel-infos-loc { height: 100%; width: 40%; border-top: none; border-left: 2px solid #374151; }
         }
 
+        /* Personnalisation du panneau Leaflet Layers pour le rendre lisible sur écran sombre tactile */
+        .leaflet-control-layers {
+            background: rgba(25, 25, 25, 0.9) !important;
+            color: #fff !important;
+            border: 1px solid #444 !important;
+            border-radius: 6px !important;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .leaflet-control-layers-toggle { width: 36px; height: 36px; }
+
         .leaflet-bottom.leaflet-left .leaflet-control-zoom { margin-bottom: 10px; }
     </style>
 </head>
@@ -265,7 +276,7 @@
         <button class="menu-btn btn-incendie" onclick="ouvrirApp('app-feu')">🔥 CALSURFEU</button>
         <button class="menu-btn btn-coord" onclick="ouvrirApp('app-coord')">🌐 LAMBERTMAPS</button>
         <button class="menu-btn btn-perim" onclick="ouvrirApp('app-perim')">⭕ PERISECU</button>
-        <button class="menu-btn btn-pdf" onclick="ouvrirApp('app-pdfdec')">💧 PERIDECI</button>
+        <button class="menu-btn btn-pdf" onclick="ouvrirApp('app-pdfdec')">📐 PERIDECI (PLAN FIXE)</button>
         <button class="menu-btn btn-loc-app" onclick="ouvrirApp('app-localisation-pure')">📍 LOCALISATION</button>
     </div>
 
@@ -729,17 +740,31 @@
         }
 
 
-        // ================= LOGIQUE APP 5 : LOCALISATION (CONTOUR CORRIGÉ) =================
+        // ================= LOGIQUE APP 5 : LOCALISATION (BASCULEMENT CARTE CORRIGÉ) =================
         const mapLocalisationPure = L.map('map-localisation', { zoomControl: false }).setView([44.89, -0.04], 13);
         L.control.zoom({ position: 'bottomleft' }).addTo(mapLocalisationPure);
-        L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapLocalisationPure);
+
+        // Définition des deux fonds de carte optionnels
+        const coucheSatellite = L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 });
+        const couchePlan = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'OpenStreetMap',
+            maxZoom: 19
+        });
+
+        // Par défaut, on active la couche satellite au démarrage
+        coucheSatellite.addTo(mapLocalisationPure);
+
+        // Ajout du sélecteur graphique natif (Top Right)
+        const fondsDeCarte = {
+            "Satellite": coucheSatellite,
+            "Plan (OpenStreetMap)": couchePlan
+        };
+        L.control.layers(fondsDeCarte, null, { position: 'topright', collapsed: false }).addTo(mapLocalisationPure);
 
         let watchIdLocPure = null;
         let markerLocPure = null;
         let cercleLocPure = null;
-        let layerContourCommune = null; 
         let dernierePositionLocPure = null;
-        let derniereCommuneIdentifiee = "";
 
         function activerGpsAppPure() {
             if (watchIdLocPure) return;
@@ -781,10 +806,10 @@
                     mapLocalisationPure.setView(dernierePositionLocPure, mapLocalisationPure.getZoom());
                 }
             }
-            recupererAdresseEtContourCommune(lat, lng);
+            recupererAdresseCommune(lat, lng);
         }
 
-        function recupererAdresseEtContourCommune(lat, lng) {
+        function recupererAdresseCommune(lat, lng) {
             const urlApiAdresse = `https://api-adresse.data.gouv.fr/reverse/?lon=${lng}&lat=${lat}`;
             
             fetch(urlApiAdresse)
@@ -792,7 +817,6 @@
                 .then(data => {
                     if (data.features && data.features.length > 0) {
                         const infos = data.features[0].properties;
-                        const codeInsee = infos.citycode;
                         
                         document.getElementById('txt-loc-commune').innerText = `${infos.city} (${infos.postcode})`;
                         
@@ -802,11 +826,6 @@
                             document.getElementById('txt-loc-rue').innerText = infos.name;
                         } else {
                             document.getElementById('txt-loc-rue').innerText = "Lieu-dit non répertorié";
-                        }
-
-                        if (derniereCommuneIdentifiee !== codeInsee) {
-                            derniereCommuneIdentifiee = codeInsee;
-                            chargerContourGeoJsonCommune(codeInsee);
                         }
                     } else {
                         recupererAdresseSecoursOsm(lat, lng);
@@ -833,47 +852,6 @@
                 });
         }
 
-        function chargerContourGeoJsonCommune(codeInsee) {
-            // Requête ciblant explicitement le contour géométrique complet de la commune
-            const urlGeoApi = `https://geo.api.gouv.fr/communes/${codeInsee}?fields=contour&format=geojson`;
-
-            fetch(urlGeoApi)
-                .then(res => res.json())
-                .then(geoJson => {
-                    // Si un contour précédent existe sur l'écran, on le nettoie proprement
-                    if (layerContourCommune) {
-                        mapLocalisationPure.removeLayer(layerContourCommune);
-                        layerContourCommune = null;
-                    }
-                    
-                    // L'API GéoGouv renvoie l'objet géométrique direct (Polygon / MultiPolygon) dans la propriété .contour
-                    if (geoJson && geoJson.contour) {
-                        // RECONSTRUCTION DE LA STRUCTURE COMPLÈTE FEATURE POUR LEAFLET
-                        const featureStandard = {
-                            "type": "Feature",
-                            "properties": {
-                                "name": "Contour Communal"
-                            },
-                            "geometry": geoJson.contour // Contient le type et le tableau imbriqué de coordonnées
-                        };
-
-                        // Injection propre via la structure standardisée lue sans faille par Leaflet
-                        layerContourCommune = L.geoJSON(featureStandard, {
-                            style: function() {
-                                return {
-                                    color: '#ff5252',     // Rouge opérationnel bien visible
-                                    weight: 3,            // Épaisseur de ligne renforcée
-                                    fillColor: '#ff5252',
-                                    fillOpacity: 0.08,    // Léger voile sur l'intérieur de la commune
-                                    dashArray: '6, 10'    // Pointillés clairs pour ne pas surcharger la cartographie
-                                };
-                            }
-                        }).addTo(mapLocalisationPure);
-                    }
-                })
-                .catch(err => console.error("Échec lors de la génération du tracé géométrique :", err));
-        }
-
         function recentrerGpsAppPure() {
             if (dernierePositionLocPure) {
                 mapLocalisationPure.setView(dernierePositionLocPure, 16);
@@ -889,9 +867,7 @@
             }
             if (markerLocPure) { mapLocalisationPure.removeLayer(markerLocPure); markerLocPure = null; }
             if (cercleLocPure) { mapLocalisationPure.removeLayer(cercleLocPure); cercleLocPure = null; }
-            if (layerContourCommune) { mapLocalisationPure.removeLayer(layerContourCommune); layerContourCommune = null; }
             dernierePositionLocPure = null;
-            derniereCommuneIdentifiee = "";
             
             document.getElementById('txt-loc-status').innerText = "Recherche satellite...";
             document.getElementById('txt-loc-commune').innerText = "-";
