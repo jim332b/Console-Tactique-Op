@@ -129,7 +129,6 @@
             display: inline-block;
         }
 
-        /* Bouton recentrer latéral pour l'application Localisation */
         .btn-recentrer-lateral {
             width: 100%;
             flex-grow: 1;
@@ -197,7 +196,7 @@
         .btn-convert { background-color: #ea580c; }
         .btn-maps { background-color: #16a34a; display: none; margin-top: 10px !important; }
 
-        /* App 3 : PERISECU */
+        /* App 3 : PERISECU UI */
         #panel-perim { background: rgba(255, 255, 255, 0.98); color: black; }
         .ligne-1 { display: flex; gap: 4px; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 6px; }
         .ligne-2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
@@ -208,7 +207,7 @@
         .main-btn { padding: 6px 10px; cursor: pointer; background: #337ab7; color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .debug-lbl { font-size: 11px; color: #337ab7; font-weight: bold; }
 
-        /* App 4 : PERIDECI (PLAN FIXE) */
+        /* App 4 : PERIDECI INTERFACE */
         #top-interface-pdf {
             position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;
             background: rgba(25, 25, 25, 0.96); color: white; padding: 10px; 
@@ -236,57 +235,16 @@
         .legende-couleur { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
 
         /* --- APP 5 : LOCALISATION SPLIT-SCREEN --- */
-        .wrapper-split-loc {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-        }
-        
-        #map-localisation {
-            height: 50%;
-            width: 100%;
-        }
-
+        .wrapper-split-loc { display: flex; flex-direction: column; height: 100%; width: 100%; }
+        #map-localisation { height: 50%; width: 100%; }
         #panel-infos-loc {
-            height: 50%;
-            width: 100%;
-            background-color: #111827;
-            box-sizing: border-box;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            color: #ffffff;
-            border-top: 2px solid #374151;
-            overflow-y: auto;
+            height: 50%; width: 100%; background-color: #111827; box-sizing: border-box; padding: 20px;
+            display: flex; flex-direction: column; justify-content: flex-start; color: #ffffff; border-top: 2px solid #374151; overflow-y: auto;
         }
-
-        .loc-bloc-adresse {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .loc-ligne-info {
-            border-bottom: 1px solid #1f2937;
-            padding-bottom: 10px;
-        }
-
-        .loc-label-fixe {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #9ca3af;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }
-
-        .loc-valeur-dynamique {
-            font-size: 20px;
-            font-weight: bold;
-            color: #ffffff;
-        }
-        
+        .loc-bloc-adresse { display: flex; flex-direction: column; gap: 14px; }
+        .loc-ligne-info { border-bottom: 1px solid #1f2937; padding-bottom: 10px; }
+        .loc-label-fixe { font-size: 11px; text-transform: uppercase; color: #9ca3af; letter-spacing: 1px; margin-bottom: 4px; }
+        .loc-valeur-dynamique { font-size: 20px; font-weight: bold; color: #ffffff; }
         .accent-adresse { color: #f59e0b; }
         .accent-commune { color: #60a5fa; }
         .accent-coords { font-family: monospace; color: #10b981; font-size: 16px; }
@@ -307,7 +265,7 @@
         <button class="menu-btn btn-incendie" onclick="ouvrirApp('app-feu')">🔥 CALSURFEU</button>
         <button class="menu-btn btn-coord" onclick="ouvrirApp('app-coord')">🌐 LAMBERTMAPS</button>
         <button class="menu-btn btn-perim" onclick="ouvrirApp('app-perim')">⭕ PERISECU</button>
-        <button class="menu-btn btn-pdf" onclick="ouvrirApp('app-pdfdec')">💧 PERIDECI</button>
+        <button class="menu-btn btn-pdf" onclick="ouvrirApp('app-pdfdec')">📐 PERIDECI (PLAN FIXE)</button>
         <button class="menu-btn btn-loc-app" onclick="ouvrirApp('app-localisation-pure')">📍 LOCALISATION</button>
     </div>
 
@@ -602,7 +560,7 @@
         
         function ouvrirGoogleMaps() { 
             if (globalLat && globalLng) {
-                window.open(`https://www.google.com/maps/search/?api=1&query=${globalLat},${globalLng}`, '_blank');
+                window.open(`https://maps.google.com/?q=${globalLat},${globalLng}`, '_blank');
             } 
         }
 
@@ -641,6 +599,7 @@
         mapPerim.on('locationfound', function(e) { document.getElementById('perim-debug').innerText = "GPS OK"; coordonnesCentrePerim = e.latlng; if (gpsMarqueur) { gpsMarqueur.setLatLng(e.latlng); } else { gpsMarqueur = L.marker(e.latlng).addTo(mapPerim); } });
         mapPerim.on('locationerror', function() { document.getElementById('perim-debug').innerText = "GPS ERR"; coordonnesCentrePerim = mapPerim.getCenter(); });
         mapPerim.on('moveend', function() { if (!gpsMarqueur) coordonnesCentrePerim = mapPerim.getCenter(); });
+
 
         // ================= LOGIQUE APP 4 : PERIDECI (PLAN FIXE) =================
         let PIXELS_POUR_2000M = 300; 
@@ -884,21 +843,30 @@
                         mapLocalisationPure.removeLayer(layerContourCommune);
                     }
                     
-                    // Inversion explicite [Lng, Lat] de l'API en [Lat, Lng] pour Leaflet
-                    layerContourCommune = L.geoJSON(geoJson, {
-                        coordsToLatLng: function (coords) {
-                            return new L.LatLng(coords[1], coords[0]);
-                        },
-                        style: { 
-                            color: '#ff5252', 
-                            weight: 3, 
-                            fillOpacity: 0.05, 
-                            fillColor: '#ff5252',
-                            dashArray: '5, 8' 
-                        }
-                    }).addTo(mapLocalisationPure);
+                    // Nettoyage et forçage de l'intégration native via L.geoJSON
+                    if (geoJson && geoJson.contour) {
+                        const geomPure = {
+                            "type": "Feature",
+                            "properties": {},
+                            "geometry": geoJson.contour
+                        };
+
+                        layerContourCommune = L.geoJSON(geomPure, {
+                            coordsToLatLng: function (coords) {
+                                // L'API renvoie du [Longitude, Latitude], on l'inverse proprement pour Leaflet en [Latitude, Longitude]
+                                return new L.LatLng(coords[1], coords[0]);
+                            },
+                            style: { 
+                                color: '#ff5252', 
+                                weight: 3, 
+                                fillOpacity: 0.08, 
+                                fillColor: '#ff5252',
+                                dashArray: '6, 10' 
+                            }
+                        }).addTo(mapLocalisationPure);
+                    }
                 })
-                .catch(err => console.log("Erreur contour: ", err));
+                .catch(err => console.log("Erreur de chargement du contour: ", err));
         }
 
         function recentrerGpsAppPure() {
