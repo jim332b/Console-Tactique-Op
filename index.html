@@ -25,6 +25,7 @@
             --btn-reset: #444;
             --btn-blue: #0284c7;
             --btn-purple: #8b5cf6;
+            --btn-green: #16a34a;
         }
 
         body, html { 
@@ -57,6 +58,7 @@
         .btn-coord { background-color: #ea580c; }
         .btn-perim { background-color: #337ab7; }
         .btn-pdf { background-color: var(--btn-purple); }
+        .btn-loc-app { background-color: var(--btn-green); }
 
         /* --- CONTENEURS DES ECRANS APPLIS --- */
         .app-container { 
@@ -70,9 +72,7 @@
             align-items: stretch;
         }
         
-        .app-container.actif {
-            display: flex !important; 
-        }
+        .app-container.actif { display: flex !important; }
         
         .app-content-wrapper {
             flex-grow: 1;
@@ -88,7 +88,7 @@
             background: #222; 
         }
 
-        /* --- COLONNE RETOUR & INTERRUPTEURS LATERAUX GAUCHE --- */
+        /* --- COLONNE BARRE LATÉRALE GAUCHE --- */
         .sidebar-left {
             width: 50px;
             min-width: 50px;
@@ -110,7 +110,7 @@
             border: none;
             background: transparent;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -119,6 +119,7 @@
             justify-content: center;
             -webkit-tap-highlight-color: transparent;
             padding: 5px;
+            box-sizing: border-box;
         }
         .btn-retour-bloc:active { background: #333333; }
         .btn-retour-bloc span {
@@ -128,30 +129,40 @@
             display: inline-block;
         }
 
-        /* Bouton spécifique masquage latéral */
-        .btn-masquer-lateral {
+        /* Bouton recentrer latéral pour l'application Localisation */
+        .btn-recentrer-lateral {
             width: 100%;
-            height: 180px;
-            background: #374151;
+            flex-grow: 1;
             color: white;
             border: none;
-            border-bottom: 1px solid #4b5563;
-            cursor: pointer;
+            background: #15803d;
+            border-top: 1px solid #166534;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 13px;
+            cursor: pointer;
             text-transform: uppercase;
+            letter-spacing: 1px;
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-tap-highlight-color: transparent;
             padding: 5px;
             box-sizing: border-box;
         }
-        .btn-masquer-lateral:active { background: #4b5563; }
-        .btn-masquer-lateral span {
+        .btn-recentrer-lateral:active { background: #16a34a; }
+        .btn-recentrer-lateral span {
             writing-mode: vertical-lr;
             transform: rotate(180deg);
             white-space: nowrap;
+            display: inline-block;
         }
+
+        .btn-masquer-lateral {
+            width: 100%; height: 180px; background: #374151; color: white; border: none;
+            border-bottom: 1px solid #4b5563; cursor: pointer; font-weight: bold; font-size: 11px;
+            text-transform: uppercase; display: flex; align-items: center; justify-content: center; padding: 5px; box-sizing: border-box;
+        }
+        .btn-masquer-lateral span { writing-mode: vertical-lr; transform: rotate(180deg); white-space: nowrap; }
 
         /* --- PANNEAUX DE COMMANDES INTERNES --- */
         .panel-ops {
@@ -186,7 +197,7 @@
         .btn-convert { background-color: #ea580c; }
         .btn-maps { background-color: #16a34a; display: none; margin-top: 10px !important; }
 
-        /* App 3 : PERISECU UI */
+        /* App 3 : PERISECU */
         #panel-perim { background: rgba(255, 255, 255, 0.98); color: black; }
         .ligne-1 { display: flex; gap: 4px; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 6px; }
         .ligne-2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
@@ -197,52 +208,94 @@
         .main-btn { padding: 6px 10px; cursor: pointer; background: #337ab7; color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .debug-lbl { font-size: 11px; color: #337ab7; font-weight: bold; }
 
-        /* App 4 : PERIDECI INTERFACE */
+        /* App 4 : PERIDECI (PLAN FIXE) */
         #top-interface-pdf {
             position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;
             background: rgba(25, 25, 25, 0.96); color: white; padding: 10px; 
-            border-radius: 8px; border: 1px solid #333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-size: 13px;
-            box-sizing: border-box; width: auto;
+            border-radius: 8px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-size: 13px; box-sizing: border-box;
         }
         .outils-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
-        
-        /* Séparation du bandeau d'outils basculable */
-        #bloc-outils-pdf {
-            transition: all 0.25s ease-in-out;
-            max-height: 200px;
-            opacity: 1;
-            overflow: hidden;
-        }
-        #bloc-outils-pdf.masque-interne {
-            max-height: 0px !important;
-            opacity: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-        }
-
+        #bloc-outils-pdf { transition: all 0.25s ease-in-out; max-height: 200px; opacity: 1; overflow: hidden; }
+        #bloc-outils-pdf.masque-interne { max-height: 0px !important; opacity: 0 !important; margin: 0 !important; padding: 0 !important; border: none !important; }
         .flex-group { display: flex; gap: 6px; align-items: center; }
         .btn-action { padding: 8px 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
         .btn-purple { background: #8b5cf6; color: white; }
         .btn-blue { background: #0284c7; color: white; }
         .btn-green { background: #16a34a; color: white; }
         .btn-red { background: #b91c1c; color: white; }
-        
         .select-ui, .input-pixel { background: #333; border: 1px solid #555; color: white; padding: 6px; border-radius: 3px; font-weight: bold; font-size: 11px; }
         .input-pixel { width: 55px; text-align: center; }
         #resultat-mesure { font-weight: bold; color: #38bdf8; font-size: 13px; text-align: center; padding: 2px 0; }
         #file-input { display: none; }
-
-        /* LÉGENDE FLOTTANTE PERIDECI */
         #legende-ops {
             position: absolute; bottom: 20px; right: 15px; z-index: 1010;
             background: rgba(15, 15, 15, 0.92); padding: 8px 12px; border-radius: 6px;
-            border: 1px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            display: flex; flex-direction: column; gap: 5px; width: 85px; font-size: 11px; font-weight: bold;
+            border: 1px solid #444; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 5px; width: 85px; font-size: 11px; font-weight: bold;
         }
         .legende-item { display: flex; align-items: center; gap: 8px; color: #ffffff; }
         .legende-couleur { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+
+        /* --- APP 5 : LOCALISATION SPLIT-SCREEN --- */
+        .wrapper-split-loc {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+        
+        #map-localisation {
+            height: 50%;
+            width: 100%;
+        }
+
+        #panel-infos-loc {
+            height: 50%;
+            width: 100%;
+            background-color: #111827;
+            box-sizing: border-box;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            color: #ffffff;
+            border-top: 2px solid #374151;
+            overflow-y: auto;
+        }
+
+        .loc-bloc-adresse {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .loc-ligne-info {
+            border-bottom: 1px solid #1f2937;
+            padding-bottom: 10px;
+        }
+
+        .loc-label-fixe {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9ca3af;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .loc-valeur-dynamique {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        .accent-adresse { color: #f59e0b; }
+        .accent-commune { color: #60a5fa; }
+        .accent-coords { font-family: monospace; color: #10b981; font-size: 16px; }
+
+        @media (min-width: 768px) {
+            .wrapper-split-loc { flex-direction: row; }
+            #map-localisation { height: 100%; width: 60%; }
+            #panel-infos-loc { height: 100%; width: 40%; border-top: none; border-left: 2px solid #374151; }
+        }
 
         .leaflet-bottom.leaflet-left .leaflet-control-zoom { margin-bottom: 10px; }
     </style>
@@ -255,6 +308,7 @@
         <button class="menu-btn btn-coord" onclick="ouvrirApp('app-coord')">🌐 LAMBERTMAPS</button>
         <button class="menu-btn btn-perim" onclick="ouvrirApp('app-perim')">⭕ PERISECU</button>
         <button class="menu-btn btn-pdf" onclick="ouvrirApp('app-pdfdec')">📐 PERIDECI (PLAN FIXE)</button>
+        <button class="menu-btn btn-loc-app" onclick="ouvrirApp('app-localisation-pure')">📍 LOCALISATION</button>
     </div>
 
     <div id="app-feu" class="app-container">
@@ -337,13 +391,10 @@
             <button class="btn-masquer-lateral" onclick="basculerInterfacePdf()" id="btn-masquer"><span>👁️ Masquer Outils</span></button>
             <button class="btn-retour-bloc" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
         </div>
-        
         <div class="app-content-wrapper">
             <div id="map-pdfdec" class="map-canvas"></div>
-            
             <div id="top-interface-pdf">
                 <div id="resultat-mesure">Double-cliquez sur le PDF pour générer les périmètres</div>
-                
                 <div id="bloc-outils-pdf" style="margin-top: 6px; border-top: 1px solid #333; padding-top: 6px;">
                     <div class="outils-row" style="margin-bottom: 8px;">
                         <div class="flex-group">
@@ -352,7 +403,6 @@
                             <button class="btn-action btn-red" onclick="effacerToutPdfDec()">❌ Effacer</button>
                         </div>
                     </div>
-                    
                     <div class="outils-row">
                         <div class="flex-group">
                             <span style="font-size:11px; color:#aaa;">Outils :</span>
@@ -365,7 +415,6 @@
                             <button id="btn-regle" class="btn-action btn-blue" onclick="basculerModeRegle()">📏 Calibrer</button>
                             <button id="btn-route" class="btn-action btn-green" onclick="basculerModeRoute()">🛣️ Mesurer Route</button>
                         </div>
-                        
                         <div class="flex-group">
                             <span style="font-size:11px; color:#aaa;">Échelle :</span>
                             <input type="number" id="input-scale" class="input-pixel" value="300" onchange="mettreAJourEchelleDirecte(this.value)"> <span style="font-size:11px; color:#aaa;">px pour 2km</span>
@@ -373,13 +422,44 @@
                     </div>
                 </div>
             </div>
-
             <div id="legende-ops">
                 <div class="legende-item"><span class="legende-couleur" style="background: #ff5252;"></span><span>200 m</span></div>
                 <div class="legende-item"><span class="legende-couleur" style="background: #ffab40;"></span><span>400 m</span></div>
                 <div class="legende-item"><span class="legende-couleur" style="background: #ffd740;"></span><span>1 km</span></div>
                 <div class="legende-item"><span class="legende-couleur" style="background: #29b6f6;"></span><span>2 km</span></div>
                 <div class="legende-item"><span class="legende-couleur" style="background: #66bb6a;"></span><span>4 km</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-localisation-pure" class="app-container">
+        <div class="sidebar-left">
+            <button class="btn-retour-bloc" style="height:50%;" onclick="retourAccueil()"><span>⬅️ Menu</span></button>
+            <button class="btn-recentrer-lateral" style="height:50%;" onclick="recentrerGpsAppPure()"><span>📍 Recentrer</span></button>
+        </div>
+        <div class="app-content-wrapper">
+            <div class="wrapper-split-loc">
+                <div id="map-localisation" class="map-canvas"></div>
+                <div id="panel-infos-loc">
+                    <div class="loc-bloc-adresse">
+                        <div class="loc-ligne-info">
+                            <div class="loc-label-fixe">Statut GPS</div>
+                            <div id="txt-loc-status" style="font-size:14px; font-weight:bold; color:#9ca3af;">Recherche satellite...</div>
+                        </div>
+                        <div class="loc-ligne-info">
+                            <div class="loc-label-fixe">Commune / Code Postal</div>
+                            <div id="txt-loc-commune" class="loc-valeur-dynamique accent-commune">-</div>
+                        </div>
+                        <div class="loc-ligne-info">
+                            <div class="loc-label-fixe">Rue / Lieu-dit</div>
+                            <div id="txt-loc-rue" class="loc-valeur-dynamique accent-adresse">-</div>
+                        </div>
+                        <div class="loc-ligne-info">
+                            <div class="loc-label-fixe">Coordonnées Géographiques (WGS84)</div>
+                            <div id="txt-loc-coords" class="loc-valeur-dynamique accent-coords">- , -</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -407,15 +487,18 @@
                     if (idApp === 'app-feu') { mapFeu.invalidateSize(true); }
                     if (idApp === 'app-perim') { mapPerim.invalidateSize(true); }
                     if (idApp === 'app-pdfdec') { mapPdfDec.invalidateSize(true); }
+                    if (idApp === 'app-localisation-pure') { mapLocalisationPure.invalidateSize(true); }
                 }, 80);
             });
 
             if (idApp === 'app-feu') activerGpsFeu();
             if (idApp === 'app-perim') declencherGpsPerim();
+            if (idApp === 'app-localisation-pure') activerGpsAppPure();
         }
 
         function retourAccueil() {
             desactiverGpsFeu();
+            desactiverGpsAppPure();
             document.querySelectorAll('.app-container').forEach(app => app.classList.remove('actif'));
             document.getElementById('zoneResultat').style.display = 'none';
             document.getElementById('btnMaps').style.display = 'none';
@@ -428,7 +511,7 @@
             retourAccueil();
         }
 
-        // ================= LOGIQUE APPLI 1 : CALSURFEU =================
+        // ================= LOGIQUE APP 1 : CALSURFEU =================
         const mapFeu = L.map('map-feu', { zoomControl: false }).setView([44.89, -0.04], 11);
         L.control.zoom({ position: 'bottomleft' }).addTo(mapFeu);
         L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapFeu);
@@ -499,7 +582,7 @@
             if (lastCoordsFeu) mapFeu.setView([lastCoordsFeu.lat, lastCoordsFeu.lng], 17);
         }
 
-        // ================= LOGIQUE APPLI 2 : LAMBERTMAPS =================
+        // ================= LOGIQUE APP 2 : LAMBERTMAPS =================
         let globalLat = null, globalLng = null;
         const lambert2Etendu = "+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356515 +towgs84=-168,-60,320,0,0,0,0 +pm=paris +units=m +no_defs";
         const wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
@@ -519,12 +602,11 @@
         
         function ouvrirGoogleMaps() { 
             if (globalLat && globalLng) {
-                // Lien officiel et standardisé pour forcer le point exact sans erreur
                 window.open(`https://www.google.com/maps/search/?api=1&query=${globalLat},${globalLng}`, '_blank');
             } 
         }
 
-        // ================= LOGIQUE APPLI 3 : PERISECU =================
+        // ================= LOGIQUE APP 3 : PERISECU =================
         const mapPerim = L.map('map-perim', { zoomControl: false }).setView([44.89, -0.04], 11);
         let coordonnesCentrePerim = mapPerim.getCenter();
         L.control.zoom({ position: 'bottomleft' }).addTo(mapPerim);
@@ -560,126 +642,77 @@
         mapPerim.on('locationerror', function() { document.getElementById('perim-debug').innerText = "GPS ERR"; coordonnesCentrePerim = mapPerim.getCenter(); });
         mapPerim.on('moveend', function() { if (!gpsMarqueur) coordonnesCentrePerim = mapPerim.getCenter(); });
 
-
-        // ================= LOGIQUE APPLI 4 : PERIDECI (PLAN FIXE) =================
+        // ================= LOGIQUE APP 4 : PERIDECI (PLAN FIXE) =================
         let PIXELS_POUR_2000M = 300; 
         let modeRegleActive = false;
         let modeRouteActive = false;
         let interfaceMasquee = false;
-        
-        let pointsMesure = [];
-        let pointsRoute = [];
+        let pointsMesure = []; let pointsRoute = [];
 
         const mapPdfDec = L.map('map-pdfdec', {
-            crs: L.CRS.Simple,
-            zoomControl: false,
-            minZoom: -2,
-            maxZoom: 3,
-            doubleClickZoom: false
+            crs: L.CRS.Simple, zoomControl: false, minZoom: -2, maxZoom: 3, doubleClickZoom: false
         }).setView([0, 0], 0);
 
         L.control.zoom({ position: 'bottomleft' }).addTo(mapPdfDec);
-
         const layerGroupPdfDec = L.featureGroup().addTo(mapPdfDec);
         const regleGroupPdfDec = L.featureGroup().addTo(mapPdfDec);
         const routeGroupPdfDec = L.featureGroup().addTo(mapPdfDec);
-        let currentPlanPdfLayer = null;
-        let polylineRoute = null;
+        let currentPlanPdfLayer = null; let polylineRoute = null;
 
-        function metreEnUnites(metres) {
-            return (metres * PIXELS_POUR_2000M) / 2000;
-        }
+        function metreEnUnites(metres) { return (metres * PIXELS_POUR_2000M) / 2000; }
+        function unitesEnMetres(pixels) { return (pixels * 2000) / PIXELS_POUR_2000M; }
+        function mettreAJourEchelleDirecte(nouvelleValeur) { PIXELS_POUR_2000M = parseFloat(nouvelleValeur) || 300; recalculerDistanceRoute(); }
 
-        function unitesEnMetres(pixels) {
-            return (pixels * 2000) / PIXELS_POUR_2000M;
-        }
-
-        function mettreAJourEchelleDirecte(nouvelleValeur) {
-            PIXELS_POUR_2000M = parseFloat(nouvelleValeur) || 300;
-            recalculerDistanceRoute();
-        }
-
-        // Bascule de l'interface via le bouton de la barre latérale
         function basculerInterfacePdf() {
             interfaceMasquee = !interfaceMasquee;
             const blocOutils = document.getElementById('bloc-outils-pdf');
             const btn = document.getElementById('btn-masquer');
-            
             if (interfaceMasquee) {
-                blocOutils.classList.add('masque-interne');
-                btn.innerHTML = "<span>👁️ Afficher Outils</span>";
-                btn.style.background = "#8b5cf6";
+                blocOutils.classList.add('masque-interne'); btn.innerHTML = "<span>👁️ Afficher Outils</span>"; btn.style.background = "#8b5cf6";
             } else {
-                blocOutils.classList.remove('masque-interne');
-                btn.innerHTML = "<span>👁️ Masquer Outils</span>";
-                btn.style.background = "#374151";
+                blocOutils.classList.remove('masque-interne'); btn.innerHTML = "<span>👁️ Masquer Outils</span>"; btn.style.background = "#374151";
             }
         }
 
         function basculerModeRegle() {
             if (modeRouteActive) basculerModeRoute();
             modeRegleActive = !modeRegleActive;
-            const btn = document.getElementById('btn-regle');
-            const divResultat = document.getElementById('resultat-mesure');
-            
+            const btn = document.getElementById('btn-regle'); const divResultat = document.getElementById('resultat-mesure');
             if (modeRegleActive) {
-                btn.style.background = '#eab308'; btn.innerText = "🛑 Règle Active";
-                divResultat.innerText = "Sélectionnez vos 2 points sur la carte...";
-                pointsMesure = []; regleGroupPdfDec.clearLayers();
+                btn.style.background = '#eab308'; btn.innerText = "🛑 Règle Active"; divResultat.innerText = "Sélectionnez vos 2 points sur la carte..."; pointsMesure = []; regleGroupPdfDec.clearLayers();
             } else {
-                btn.style.background = '#0284c7'; btn.innerText = "📏 Calibrer";
-                divResultat.innerText = "Double-cliquez pour poser les périmètres";
-                regleGroupPdfDec.clearLayers();
+                btn.style.background = '#0284c7'; btn.innerText = "📏 Calibrer"; divResultat.innerText = "Double-cliquez pour poser les périmètres"; regleGroupPdfDec.clearLayers();
             }
         }
 
         function basculerModeRoute() {
             if (modeRegleActive) basculerModeRegle();
             modeRouteActive = !modeRouteActive;
-            const btn = document.getElementById('btn-route');
-            const divResultat = document.getElementById('resultat-mesure');
-            
+            const btn = document.getElementById('btn-route'); const divResultat = document.getElementById('resultat-mesure');
             if (modeRouteActive) {
-                btn.style.background = '#eab308'; btn.innerText = "🛑 Arrêter Route";
-                divResultat.innerText = "Cliquez le long de la route pour mesurer...";
-                pointsRoute = []; routeGroupPdfDec.clearLayers();
-                polylineRoute = L.polyline([], { color: '#16a34a', weight: 4 }).addTo(routeGroupPdfDec);
+                btn.style.background = '#eab308'; btn.innerText = "🛑 Arrêter Route"; divResultat.innerText = "Cliquez le long de la route pour mesurer..."; pointsRoute = []; routeGroupPdfDec.clearLayers(); polylineRoute = L.polyline([], { color: '#16a34a', weight: 4 }).addTo(routeGroupPdfDec);
             } else {
-                btn.style.background = '#16a34a'; btn.innerText = "🛣️ Mesurer Route";
-                divResultat.innerText = "Double-cliquez pour poser les périmètres";
+                btn.style.background = '#16a34a'; btn.innerText = "🛣️ Mesurer Route"; divResultat.innerText = "Double-cliquez pour poser les périmètres";
             }
         }
 
         mapPdfDec.on('click', function(e) {
             if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer) return;
-
             if (modeRegleActive) {
-                pointsMesure.push(e.latlng);
-                L.circleMarker(e.latlng, { radius: 4, color: '#eab308', fillColor: '#fff', fillOpacity: 1 }).addTo(regleGroupPdfDec);
-
+                pointsMesure.push(e.latlng); L.circleMarker(e.latlng, { radius: 4, color: '#eab308', fillColor: '#fff', fillOpacity: 1 }).addTo(regleGroupPdfDec);
                 if (pointsMesure.length === 2) {
-                    const dx = pointsMesure[1].lng - pointsMesure[0].lng;
-                    const dy = pointsMesure[1].lat - pointsMesure[0].lat;
-                    const distancePixels = Math.sqrt(dx * dx + dy * dy);
-                    const distanceCibleMetres = parseFloat(document.getElementById('select-distance').value);
+                    const dx = pointsMesure[1].lng - pointsMesure[0].lng; const dy = pointsMesure[1].lat - pointsMesure[0].lat;
+                    const distancePixels = Math.sqrt(dx * dx + dy * dy); const distanceCibleMetres = parseFloat(document.getElementById('select-distance').value);
                     const etalonCalcule = Math.round((distancePixels / distanceCibleMetres) * 2000);
-
                     L.polyline(pointsMesure, { color: '#eab308', weight: 3, dashArray: '4, 4' }).addTo(regleGroupPdfDec);
                     document.getElementById('resultat-mesure').innerText = `Échelle étalonnée : ${etalonCalcule} px`;
-                    document.getElementById('input-scale').value = etalonCalcule;
-                    PIXELS_POUR_2000M = etalonCalcule;
-                    basculerModeRegle();
+                    document.getElementById('input-scale').value = etalonCalcule; PIXELS_POUR_2000M = etalonCalcule; basculerModeRegle();
                 }
                 return;
             }
-
             if (modeRouteActive) {
-                pointsRoute.push(e.latlng);
-                L.circleMarker(e.latlng, { radius: 5, color: '#16a34a', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(routeGroupPdfDec);
-                
-                polylineRoute.setLatLngs(pointsRoute);
-                recalculerDistanceRoute();
-                return;
+                pointsRoute.push(e.latlng); L.circleMarker(e.latlng, { radius: 5, color: '#16a34a', fillColor: '#fff', fillOpacity: 1, weight: 2 }).addTo(routeGroupPdfDec);
+                polylineRoute.setLatLngs(pointsRoute); recalculerDistanceRoute(); return;
             }
         });
 
@@ -687,8 +720,7 @@
             if (pointsRoute.length < 2) return;
             let distancePixelsCumulee = 0;
             for (let i = 0; i < pointsRoute.length - 1; i++) {
-                const dx = pointsRoute[i+1].lng - pointsRoute[i].lng;
-                const dy = pointsRoute[i+1].lat - pointsRoute[i].lat;
+                const dx = pointsRoute[i+1].lng - pointsRoute[i].lng; const dy = pointsRoute[i+1].lat - pointsRoute[i].lat;
                 distancePixelsCumulee += Math.sqrt(dx * dx + dy * dy);
             }
             const distanceMetres = unitesEnMetres(distancePixelsCumulee);
@@ -698,56 +730,31 @@
 
         mapPdfDec.on('dblclick', function(e) {
             if (currentAppId !== 'app-pdfdec' || !currentPlanPdfLayer || modeRegleActive || modeRouteActive) return;
-
-            layerGroupPdfDec.clearLayers();
-            const pointCentral = e.latlng;
-
+            layerGroupPdfDec.clearLayers(); const pointCentral = e.latlng;
             const configurations = [
-                { rayon: 200, couleur: '#ff5252' },
-                { rayon: 400, couleur: '#ffab40' },
-                { rayon: 1000, couleur: '#ffd740' },
-                { rayon: 2000, couleur: '#29b6f6' },
-                { rayon: 4000, couleur: '#66bb6a' }
+                { rayon: 200, color: '#ff5252' }, { rayon: 400, color: '#ffab40' }, { rayon: 1000, color: '#ffd740' }, { rayon: 2000, color: '#29b6f6' }, { rayon: 4000, color: '#66bb6a' }
             ];
-
             configurations.forEach(config => {
                 const rayonUnites = metreEnUnites(config.rayon);
-                L.circle(pointCentral, {
-                    radius: rayonUnites,
-                    color: config.couleur,
-                    weight: 8,
-                    dashArray: '10, 15', 
-                    fillColor: config.couleur,
-                    fillOpacity: 0.01
-                }).addTo(layerGroupPdfDec);
+                L.circle(pointCentral, { radius: rayonUnites, color: config.color, weight: 8, dashArray: '10, 15', fillColor: config.color, fillOpacity: 0.01 }).addTo(layerGroupPdfDec);
             });
-
             L.circleMarker(pointCentral, { radius: 5, color: '#fff', fillColor: '#000', fillOpacity: 1, weight: 2 }).addTo(layerGroupPdfDec);
         });
 
         document.getElementById('file-input').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            effacerToutPdfDec();
-            const fileReader = new FileReader();
+            const file = e.target.files[0]; if (!file) return;
+            effacerToutPdfDec(); const fileReader = new FileReader();
             fileReader.onload = function() {
                 const typedarray = new Uint8Array(this.result);
                 pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
                     pdf.getPage(1).then(function(page) {
                         const viewport = page.getViewport({ scale: 2.0 });
-                        const canvas = document.createElement('canvas');
-                        canvas.height = viewport.height; canvas.width = viewport.width;
+                        const canvas = document.createElement('canvas'); canvas.height = viewport.height; canvas.width = viewport.width;
                         const context = canvas.getContext('2d');
-
                         page.render({ canvasContext: context, viewport: viewport }).promise.then(function() {
-                            const imgUrl = canvas.toDataURL('image/png');
-                            const h = viewport.height; const w = viewport.width;
-                            const limitesImage = [[0, 0], [h, w]];
-
-                            currentPlanPdfLayer = L.imageOverlay(imgUrl, limitesImage).addTo(mapPdfDec);
-                            mapPdfDec.fitBounds(limitesImage);
-                            document.getElementById('resultat-mesure').innerText = "Plan PDF chargé. Calibrez l'échelle.";
+                            const imgUrl = canvas.toDataURL('image/png'); const h = viewport.height; const w = viewport.width;
+                            const limitesImage = [[0, 0], [h, w]]; currentPlanPdfLayer = L.imageOverlay(imgUrl, limitesImage).addTo(mapPdfDec);
+                            mapPdfDec.fitBounds(limitesImage); document.getElementById('resultat-mesure').innerText = "Plan PDF chargé. Calibrez l'échelle.";
                         });
                     });
                 });
@@ -756,16 +763,167 @@
         });
 
         function effacerToutPdfDec() {
-            layerGroupPdfDec.clearLayers();
-            regleGroupPdfDec.clearLayers();
-            routeGroupPdfDec.clearLayers();
-            pointsMesure = []; pointsRoute = [];
-            
-            if (modeRegleActive) basculerModeRegle();
-            if (modeRouteActive) basculerModeRoute();
+            layerGroupPdfDec.clearLayers(); regleGroupPdfDec.clearLayers(); routeGroupPdfDec.clearLayers(); pointsMesure = []; pointsRoute = [];
+            if (modeRegleActive) basculerModeRegle(); if (modeRouteActive) basculerModeRoute();
             if (currentPlanPdfLayer) { mapPdfDec.removeLayer(currentPlanPdfLayer); currentPlanPdfLayer = null; }
-            
             document.getElementById('resultat-mesure').innerText = "Double-cliquez pour poser les périmètres";
+        }
+
+
+        // ================= LOGIQUE APP 5 : LOCALISATION (FIXÉE) =================
+        const mapLocalisationPure = L.map('map-localisation', { zoomControl: false }).setView([44.89, -0.04], 13);
+        L.control.zoom({ position: 'bottomleft' }).addTo(mapLocalisationPure);
+        L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapLocalisationPure);
+
+        let watchIdLocPure = null;
+        let markerLocPure = null;
+        let cercleLocPure = null;
+        let layerContourCommune = null; 
+        let dernierePositionLocPure = null;
+        let derniereCommuneIdentifiee = "";
+
+        function activerGpsAppPure() {
+            if (watchIdLocPure) return;
+            if (!navigator.geolocation) {
+                document.getElementById('txt-loc-status').innerText = "❌ Matériel GPS non pris en charge";
+                return;
+            }
+            document.getElementById('txt-loc-status').innerText = "📡 Recherche du signal initial...";
+
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                traiterMiseAJourGpsPure(pos, true);
+            }, null, { enableHighAccuracy: true });
+
+            watchIdLocPure = navigator.geolocation.watchPosition(function(pos) {
+                traiterMiseAJourGpsPure(pos, false);
+            }, function(err) {
+                document.getElementById('txt-loc-status').innerHTML = "<span style='color:#ef4444;'>❌ Signal GPS perdu</span>";
+            }, { enableHighAccuracy: true, maximumAge: 0 });
+        }
+
+        function traiterMiseAJourGpsPure(pos, recentrerObligatoire) {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            const precision = Math.round(pos.coords.accuracy);
+            dernierePositionLocPure = L.latLng(lat, lng);
+
+            document.getElementById('txt-loc-status').innerHTML = `<span style='color:#22c55e;'>🟢 Connecté</span> (Précision : ${precision}m)`;
+            document.getElementById('txt-loc-coords').innerText = `${lat.toFixed(5)} , ${lng.toFixed(5)}`;
+
+            if (!markerLocPure) {
+                cercleLocPure = L.circle(dernierePositionLocPure, { radius: precision, color: '#10b981', weight: 1, fillColor: '#10b981', fillOpacity: 0.15 }).addTo(mapLocalisationPure);
+                markerLocPure = L.circleMarker(dernierePositionLocPure, { radius: 8, color: '#ffffff', fillColor: '#10b981', fillOpacity: 1, weight: 2 }).addTo(mapLocalisationPure);
+                mapLocalisationPure.setView(dernierePositionLocPure, 16);
+            } else {
+                markerLocPure.setLatLng(dernierePositionLocPure);
+                cercleLocPure.setLatLng(dernierePositionLocPure);
+                cercleLocPure.setRadius(precision);
+                if (recentrerObligatoire) {
+                    mapLocalisationPure.setView(dernierePositionLocPure, mapLocalisationPure.getZoom());
+                }
+            }
+            recupererAdresseEtContourCommune(lat, lng);
+        }
+
+        function recupererAdresseEtContourCommune(lat, lng) {
+            const urlApiAdresse = `https://api-adresse.data.gouv.fr/reverse/?lon=${lng}&lat=${lat}`;
+            
+            fetch(urlApiAdresse)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.features && data.features.length > 0) {
+                        const infos = data.features[0].properties;
+                        const codeInsee = infos.citycode;
+                        
+                        document.getElementById('txt-loc-commune').innerText = `${infos.city} (${infos.postcode})`;
+                        
+                        if (infos.street) {
+                            document.getElementById('txt-loc-rue').innerText = (infos.housenumber ? infos.housenumber + " " : "") + infos.street;
+                        } else if (infos.name) {
+                            document.getElementById('txt-loc-rue').innerText = infos.name;
+                        } else {
+                            document.getElementById('txt-loc-rue').innerText = "Lieu-dit non répertorié";
+                        }
+
+                        if (derniereCommuneIdentifiee !== codeInsee) {
+                            derniereCommuneIdentifiee = codeInsee;
+                            chargerContourGeoJsonCommune(codeInsee);
+                        }
+                    } else {
+                        recupererAdresseSecoursOsm(lat, lng);
+                    }
+                })
+                .catch(() => { recupererAdresseSecoursOsm(lat, lng); });
+        }
+
+        function recupererAdresseSecoursOsm(lat, lng) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(res => res.json())
+                .then(data => {
+                    const depeche = data.address;
+                    const ville = depeche.city || depeche.town || depeche.village || "-";
+                    const cp = depeche.postcode || "-";
+                    const rue = depeche.road || depeche.suburb || "Lieu-dit inconnu";
+                    
+                    document.getElementById('txt-loc-commune').innerText = `${ville} (${cp})`;
+                    document.getElementById('txt-loc-rue').innerText = rue;
+                })
+                .catch(() => {
+                    document.getElementById('txt-loc-commune').innerText = "Inconnue (Erreur réseau)";
+                    document.getElementById('txt-loc-rue').innerText = "Impossible de charger la rue";
+                });
+        }
+
+        function chargerContourGeoJsonCommune(codeInsee) {
+            const urlGeoApi = `https://geo.api.gouv.fr/communes/${codeInsee}?fields=contour&format=geojson`;
+
+            fetch(urlGeoApi)
+                .then(res => res.json())
+                .then(geoJson => {
+                    if (layerContourCommune) {
+                        mapLocalisationPure.removeLayer(layerContourCommune);
+                    }
+                    
+                    // Inversion explicite [Lng, Lat] de l'API en [Lat, Lng] pour Leaflet
+                    layerContourCommune = L.geoJSON(geoJson, {
+                        coordsToLatLng: function (coords) {
+                            return new L.LatLng(coords[1], coords[0]);
+                        },
+                        style: { 
+                            color: '#ff5252', 
+                            weight: 3, 
+                            fillOpacity: 0.05, 
+                            fillColor: '#ff5252',
+                            dashArray: '5, 8' 
+                        }
+                    }).addTo(mapLocalisationPure);
+                })
+                .catch(err => console.log("Erreur contour: ", err));
+        }
+
+        function recentrerGpsAppPure() {
+            if (dernierePositionLocPure) {
+                mapLocalisationPure.setView(dernierePositionLocPure, 16);
+            } else {
+                activerGpsAppPure();
+            }
+        }
+
+        function desactiverGpsAppPure() {
+            if (watchIdLocPure) {
+                navigator.geolocation.clearWatch(watchIdLocPure);
+                watchIdLocPure = null;
+            }
+            if (markerLocPure) { mapLocalisationPure.removeLayer(markerLocPure); markerLocPure = null; }
+            if (cercleLocPure) { mapLocalisationPure.removeLayer(cercleLocPure); cercleLocPure = null; }
+            if (layerContourCommune) { mapLocalisationPure.removeLayer(layerContourCommune); layerContourCommune = null; }
+            dernierePositionLocPure = null;
+            derniereCommuneIdentifiee = "";
+            
+            document.getElementById('txt-loc-status').innerText = "Recherche satellite...";
+            document.getElementById('txt-loc-commune').innerText = "-";
+            document.getElementById('txt-loc-rue').innerText = "-";
+            document.getElementById('txt-loc-coords').innerText = "- , -";
         }
     </script>
 </body>
