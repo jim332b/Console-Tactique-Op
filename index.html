@@ -560,7 +560,7 @@
         
         function ouvrirGoogleMaps() { 
             if (globalLat && globalLng) {
-                window.open(`https://maps.google.com/?q=${globalLat},${globalLng}`, '_blank');
+                window.open(`https://www.google.com/maps/search/?api=1&query=${globalLat},${globalLng}`, '_blank');
             } 
         }
 
@@ -729,7 +729,7 @@
         }
 
 
-        // ================= LOGIQUE APP 5 : LOCALISATION (FIXÉE) =================
+        // ================= LOGIQUE APP 5 : LOCALISATION (CONTOUR CORRIGÉ) =================
         const mapLocalisationPure = L.map('map-localisation', { zoomControl: false }).setView([44.89, -0.04], 13);
         L.control.zoom({ position: 'bottomleft' }).addTo(mapLocalisationPure);
         L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapLocalisationPure);
@@ -834,39 +834,44 @@
         }
 
         function chargerContourGeoJsonCommune(codeInsee) {
+            // Requête ciblant explicitement le contour géométrique complet de la commune
             const urlGeoApi = `https://geo.api.gouv.fr/communes/${codeInsee}?fields=contour&format=geojson`;
 
             fetch(urlGeoApi)
                 .then(res => res.json())
                 .then(geoJson => {
+                    // Si un contour précédent existe sur l'écran, on le nettoie proprement
                     if (layerContourCommune) {
                         mapLocalisationPure.removeLayer(layerContourCommune);
+                        layerContourCommune = null;
                     }
                     
-                    // Nettoyage et forçage de l'intégration native via L.geoJSON
+                    // L'API GéoGouv renvoie l'objet géométrique direct (Polygon / MultiPolygon) dans la propriété .contour
                     if (geoJson && geoJson.contour) {
-                        const geomPure = {
+                        // RECONSTRUCTION DE LA STRUCTURE COMPLÈTE FEATURE POUR LEAFLET
+                        const featureStandard = {
                             "type": "Feature",
-                            "properties": {},
-                            "geometry": geoJson.contour
+                            "properties": {
+                                "name": "Contour Communal"
+                            },
+                            "geometry": geoJson.contour // Contient le type et le tableau imbriqué de coordonnées
                         };
 
-                        layerContourCommune = L.geoJSON(geomPure, {
-                            coordsToLatLng: function (coords) {
-                                // L'API renvoie du [Longitude, Latitude], on l'inverse proprement pour Leaflet en [Latitude, Longitude]
-                                return new L.LatLng(coords[1], coords[0]);
-                            },
-                            style: { 
-                                color: '#ff5252', 
-                                weight: 3, 
-                                fillOpacity: 0.08, 
-                                fillColor: '#ff5252',
-                                dashArray: '6, 10' 
+                        // Injection propre via la structure standardisée lue sans faille par Leaflet
+                        layerContourCommune = L.geoJSON(featureStandard, {
+                            style: function() {
+                                return {
+                                    color: '#ff5252',     // Rouge opérationnel bien visible
+                                    weight: 3,            // Épaisseur de ligne renforcée
+                                    fillColor: '#ff5252',
+                                    fillOpacity: 0.08,    // Léger voile sur l'intérieur de la commune
+                                    dashArray: '6, 10'    // Pointillés clairs pour ne pas surcharger la cartographie
+                                };
                             }
                         }).addTo(mapLocalisationPure);
                     }
                 })
-                .catch(err => console.log("Erreur de chargement du contour: ", err));
+                .catch(err => console.error("Échec lors de la génération du tracé géométrique :", err));
         }
 
         function recentrerGpsAppPure() {
