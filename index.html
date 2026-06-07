@@ -105,12 +105,12 @@
 
         .btn-retour-bloc {
             width: 100%;
-            flex-grow: 1;
+            height: 50%;
             color: white;
             border: none;
             background: transparent;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -119,9 +119,38 @@
             justify-content: center;
             -webkit-tap-highlight-color: transparent;
             padding: 5px;
+            box-sizing: border-box;
         }
         .btn-retour-bloc:active { background: #333333; }
         .btn-retour-bloc span {
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        /* Bouton recentrer latéral spécifique pour la géoloc */
+        .btn-recentrer-lateral {
+            width: 100%;
+            height: 50%;
+            color: white;
+            border: none;
+            background: #15803d;
+            border-top: 1px solid #166534;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        .btn-recentrer-lateral:active { background: #16a34a; }
+        .btn-recentrer-lateral span {
             writing-mode: vertical-lr;
             transform: rotate(180deg);
             white-space: nowrap;
@@ -179,7 +208,7 @@
         .main-btn { padding: 6px 10px; cursor: pointer; background: #337ab7; color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .debug-lbl { font-size: 11px; color: #337ab7; font-weight: bold; }
 
-        /* App 4 : PERIDECI */
+        /* App 4 : PERIDECI (PLAN FIXE) */
         #top-interface-pdf {
             position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1000;
             background: rgba(25, 25, 25, 0.96); color: white; padding: 10px; 
@@ -209,25 +238,25 @@
         /* --- APP 5 : LOCALISATION SPLIT-SCREEN --- */
         .wrapper-split-loc {
             display: flex;
-            flex-direction: column; /* Haut: Carte, Bas: Infos */
+            flex-direction: column;
             height: 100%;
             width: 100%;
         }
         
         #map-localisation {
-            height: 50%; /* 50% Carte */
+            height: 50%;
             width: 100%;
         }
 
         #panel-infos-loc {
-            height: 50%; /* 50% Données texte */
+            height: 50%;
             width: 100%;
-            background-color: #111827; /* Fond très sombre */
+            background-color: #111827;
             box-sizing: border-box;
-            padding: 15px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
             color: #ffffff;
             border-top: 2px solid #374151;
             overflow-y: auto;
@@ -236,12 +265,12 @@
         .loc-bloc-adresse {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
 
         .loc-ligne-info {
             border-bottom: 1px solid #1f2937;
-            padding-bottom: 8px;
+            padding-bottom: 10px;
         }
 
         .loc-label-fixe {
@@ -249,37 +278,19 @@
             text-transform: uppercase;
             color: #9ca3af;
             letter-spacing: 1px;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .loc-valeur-dynamique {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             color: #ffffff;
         }
         
-        .accent-adresse { color: #f59e0b; } /* Orange/Jaune pour la rue */
-        .accent-commune { color: #60a5fa; } /* Bleu pour la commune */
-        .accent-coords { font-family: monospace; color: #10b981; font-size: 15px; } /* Vert pour les coordonnées */
+        .accent-adresse { color: #f59e0b; }
+        .accent-commune { color: #60a5fa; }
+        .accent-coords { font-family: monospace; color: #10b981; font-size: 16px; }
 
-        .btn-recentrer-grand-vert {
-            width: 100%;
-            background-color: #16a34a;
-            color: white;
-            border: none;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            margin-top: 10px;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-recentrer-grand-vert:active { background-color: #15803d; transform: scale(0.99); }
-
-        /* Adaptations tablettes/écrans larges (gauche/droite au lieu de haut/bas) */
         @media (min-width: 768px) {
             .wrapper-split-loc { flex-direction: row; }
             #map-localisation { height: 100%; width: 60%; }
@@ -302,7 +313,7 @@
 
     <div id="app-feu" class="app-container">
         <div class="sidebar-left">
-            <button class="btn-retour-bloc" onclick="reinitialiserEtRetour()"><span>⬅️ Menu Principal</span></button>
+            <button class="btn-retour-bloc" style="height:100%;" onclick="reinitialiserEtRetour()"><span>⬅️ Menu Principal</span></button>
         </div>
         <div class="app-content-wrapper">
             <div id="map-feu" class="map-canvas"></div>
@@ -322,7 +333,7 @@
 
     <div id="app-coord" class="app-container">
         <div class="sidebar-left">
-            <button class="btn-retour-bloc" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+            <button class="btn-retour-bloc" style="height:100%;" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
         </div>
         <div class="app-content-wrapper">
             <div id="container-coord">
@@ -351,7 +362,7 @@
 
     <div id="app-perim" class="app-container">
         <div class="sidebar-left">
-            <button class="btn-retour-bloc" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+            <button class="btn-retour-bloc" style="height:100%;" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
         </div>
         <div class="app-content-wrapper">
             <div id="map-perim" class="map-canvas"></div>
@@ -378,7 +389,7 @@
     <div id="app-pdfdec" class="app-container">
         <div class="sidebar-left">
             <button class="btn-masquer-lateral" onclick="basculerInterfacePdf()" id="btn-masquer"><span>👁️ Masquer Outils</span></button>
-            <button class="btn-retour-bloc" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
+            <button class="btn-retour-bloc" style="height: calc(100vh - 180px);" onclick="retourAccueil()"><span>⬅️ Menu Principal</span></button>
         </div>
         <div class="app-content-wrapper">
             <div id="map-pdfdec" class="map-canvas"></div>
@@ -424,6 +435,7 @@
     <div id="app-localisation-pure" class="app-container">
         <div class="sidebar-left">
             <button class="btn-retour-bloc" onclick="retourAccueil()"><span>⬅️ Menu</span></button>
+            <button class="btn-recentrer-lateral" onclick="recentrerGpsAppPure()"><span>📍 Recentrer</span></button>
         </div>
         <div class="app-content-wrapper">
             <div class="wrapper-split-loc">
@@ -448,8 +460,6 @@
                             <div id="txt-loc-coords" class="loc-valeur-dynamique accent-coords">- , -</div>
                         </div>
                     </div>
-                    
-                    <button class="btn-recentrer-grand-vert" onclick="recentrerGpsAppPure()">📍 Recentrer la carte</button>
                 </div>
             </div>
         </div>
@@ -600,7 +610,7 @@
         
         function ouvrirGoogleMaps() { 
             if (globalLat && globalLng) {
-                window.open(`http://googleusercontent.com/maps.google.com/5{globalLat},${globalLng}`, '_blank');
+                window.open(`http://maps.google.com/?q=${globalLat},${globalLng}`, '_blank');
             } 
         }
 
@@ -754,7 +764,6 @@
                             const imgUrl = canvas.toDataURL('image/png'); const h = viewport.height; const w = viewport.width;
                             const limitesImage = [[0, 0], [h, w]]; currentPlanPdfLayer = L.imageOverlay(imgUrl, limitesImage).addTo(mapPdfDec);
                             mapPdfDec.fitBounds(limitesImage); document.getElementById('resultat-mesure').innerText = "Plan PDF chargé. Calibrez l'échelle.";
-                            sauvegarderPdfVersDrive(file);
                         });
                     });
                 });
@@ -769,25 +778,8 @@
             document.getElementById('resultat-mesure').innerText = "Double-cliquez pour poser les périmètres";
         }
 
-        function sauvegarderPdfVersDrive(file) {
-            const labelMesure = document.getElementById('resultat-mesure'); const texteOrigine = labelMesure.innerText;
-            labelMesure.innerText = "⏳ Enregistrement du PDF dans Google Drive..."; const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result.split(',')[1];
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run
-                        .withSuccessHandler(function(idFichier) { labelMesure.innerText = "✅ PDF sauvegardé sur Drive (ID : " + idFichier + ")"; setTimeout(() => { labelMesure.innerText = texteOrigine; }, 4000); })
-                        .withFailureHandler(function(err) { labelMesure.innerText = "❌ Échec de l'envoi Drive : " + err.message; })
-                        .savePDF(base64Data, file.name);
-                } else {
-                    labelMesure.innerText = "⚠️ Mode local (Pas de connexion Drive)"; setTimeout(() => { labelMesure.innerText = texteOrigine; }, 3000);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
 
-
-        // ================= LOGIQUE APP 5 : LOCALISATION (SPLIT SCREEN INTEGRAL) =================
+        // ================= LOGIQUE APP 5 : LOCALISATION (CONTOUR RESOLU) =================
         const mapLocalisationPure = L.map('map-localisation', { zoomControl: false }).setView([44.89, -0.04], 13);
         L.control.zoom({ position: 'bottomleft' }).addTo(mapLocalisationPure);
         L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapLocalisationPure);
@@ -841,12 +833,10 @@
                 }
             }
 
-            // Lancement du décodage de l'adresse et du tracé de la commune
             recupererAdresseEtContourCommune(lat, lng);
         }
 
         function recupererAdresseEtContourCommune(lat, lng) {
-            // 1. Appel API Adresse Gouv ou OpenStreetMap Reverse si non trouvé
             const urlApiAdresse = `https://api-adresse.data.gouv.fr/reverse/?lon=${lng}&lat=${lat}`;
             
             fetch(urlApiAdresse)
@@ -854,11 +844,10 @@
                 .then(data => {
                     if (data.features && data.features.length > 0) {
                         const infos = data.features[0].properties;
-                        const codeInsee = infos.citycode; // Requis pour le tracé précis des limites
+                        const codeInsee = infos.citycode;
                         
                         document.getElementById('txt-loc-commune').innerText = `${infos.city} (${infos.postcode})`;
                         
-                        // Gestion du libellé de la voie ou du lieu-dit
                         if (infos.street) {
                             document.getElementById('txt-loc-rue').innerText = (infos.housenumber ? infos.housenumber + " " : "") + infos.street;
                         } else if (infos.name) {
@@ -867,13 +856,11 @@
                             document.getElementById('txt-loc-rue').innerText = "Lieu-dit non répertorié";
                         }
 
-                        // Si on change de commune, on recharge le tracé géographique du contour
                         if (derniereCommuneIdentifiee !== codeInsee) {
                             derniereCommuneIdentifiee = codeInsee;
                             chargerContourGeoJsonCommune(codeInsee);
                         }
                     } else {
-                        // Secours OpenStreetMap si hors des limites France API Gouv
                         recupererAdresseSecoursOsm(lat, lng);
                     }
                 })
@@ -899,7 +886,6 @@
         }
 
         function chargerContourGeoJsonCommune(codeInsee) {
-            // Appel à la GeoAPI officielle de l'État pour obtenir le polygone de la commune
             const urlGeoApi = `https://geo.api.gouv.fr/communes/${codeInsee}?fields=contour&format=geojson`;
 
             fetch(urlGeoApi)
@@ -908,12 +894,22 @@
                     if (layerContourCommune) {
                         mapLocalisationPure.removeLayer(layerContourCommune);
                     }
-                    // Tracé du contour en Rouge vif opérationnel (sans remplissage pour ne pas masquer les dalles sat)
+                    
+                    // Correction majeure : Forcer l'inversion des coordonnées pour Leaflet [Lng, Lat] -> [Lat, Lng]
                     layerContourCommune = L.geoJSON(geoJson, {
-                        style: { color: '#ff5252', weight: 3, fillOpacity: 0.0, dashArray: '4, 6' }
+                        coordsToLatLng: function (coords) {
+                            return new L.LatLng(coords[1], coords[0]);
+                        },
+                        style: { 
+                            color: '#ff5252', 
+                            weight: 3, 
+                            fillOpacity: 0.05, 
+                            fillColor: '#ff5252',
+                            dashArray: '5, 8' 
+                        }
                     }).addTo(mapLocalisationPure);
                 })
-                .catch(err => console.log("Erreur de chargement des limites de commune: ", err));
+                .catch(err => console.log("Erreur de chargement du contour: ", err));
         }
 
         function recentrerGpsAppPure() {
