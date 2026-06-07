@@ -396,7 +396,9 @@
         <button class="btn-recentrer-lateral" style="height:50%;" onclick="recentrerGpsAppPure()"><span>📍 Recentrer</span></button>
     </div>
     <div class="app-content-wrapper">
-        <button id="btn-toggle-layer" onclick="toggleMapLayer()" style="position:absolute; top:10px; right:10px; z-index:5001; padding:8px; background:#333; color:white; border:none; border-radius:4px; font-size:12px; cursor:pointer;">Plan / Satellite</button>
+        <button id="btn-toggle-layer" onclick="toggleMapLayer()" style="position:absolute; top:20px; right:20px; z-index:9999; padding:10px 15px; background:#fff; color:#000; border:2px solid #333; border-radius:6px; font-weight:bold; cursor:pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+    Plan / Satellite
+</button>
         
         <div class="wrapper-split-loc">
             <div id="map-localisation" class="map-canvas"></div>
@@ -731,22 +733,32 @@
         }
 
 
-        // ================= LOGIQUE APP 5 : LOCALISATION (CONTOUR CORRIGÉ) =================
-       // --- LOGIQUE BASCULE PLAN/SATELLITE ---
-let estSatellite = false;
-const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
-const satLayer = L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 });
+        // ================= LOGIQUE APP 5 : LOCALISATION (CORRIGÉE) =================
+// 1. Définition explicite des couches
+const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' });
+const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' });
 
+// 2. Initialisation : OSM par défaut
+const mapLocalisationPure = L.map('map-localisation', { 
+    zoomControl: false, 
+    layers: [osmLayer] // Force le mode Plan dès l'ouverture
+}).setView([44.89, -0.04], 13);
+
+L.control.zoom({ position: 'bottomleft' }).addTo(mapLocalisationPure);
+
+// 3. Fonction de bascule robuste
+let estSatellite = false;
 function toggleMapLayer() {
     if (estSatellite) {
         mapLocalisationPure.removeLayer(satLayer);
         osmLayer.addTo(mapLocalisationPure);
+        estSatellite = false;
     } else {
         mapLocalisationPure.removeLayer(osmLayer);
         satLayer.addTo(mapLocalisationPure);
+        estSatellite = true;
     }
-    estSatellite = !estSatellite;
-} 
+}
         const mapLocalisationPure = L.map('map-localisation', { zoomControl: false, layers: [osmLayer] }).setView([44.89, -0.04], 13);
         L.control.zoom({ position: 'bottomleft' }).addTo(mapLocalisationPure);
         L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapLocalisationPure);
