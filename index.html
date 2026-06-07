@@ -391,36 +391,38 @@
     </div>
 
     <div id="app-localisation-pure" class="app-container">
-        <div class="sidebar-left">
-            <button class="btn-retour-bloc" style="height:50%;" onclick="retourAccueil()"><span>⬅️ Menu</span></button>
-            <button class="btn-recentrer-lateral" style="height:50%;" onclick="recentrerGpsAppPure()"><span>📍 Recentrer</span></button>
-        </div>
-        <div class="app-content-wrapper">
-            <div class="wrapper-split-loc">
-                <div id="map-localisation" class="map-canvas"></div>
-                <div id="panel-infos-loc">
-                    <div class="loc-bloc-adresse">
-                        <div class="loc-ligne-info">
-                            <div class="loc-label-fixe">Statut GPS</div>
-                            <div id="txt-loc-status" style="font-size:14px; font-weight:bold; color:#9ca3af;">Recherche satellite...</div>
-                        </div>
-                        <div class="loc-ligne-info">
-                            <div class="loc-label-fixe">Commune / Code Postal</div>
-                            <div id="txt-loc-commune" class="loc-valeur-dynamique accent-commune">-</div>
-                        </div>
-                        <div class="loc-ligne-info">
-                            <div class="loc-label-fixe">Rue / Lieu-dit</div>
-                            <div id="txt-loc-rue" class="loc-valeur-dynamique accent-adresse">-</div>
-                        </div>
-                        <div class="loc-ligne-info">
-                            <div class="loc-label-fixe">Coordonnées Géographiques (WGS84)</div>
-                            <div id="txt-loc-coords" class="loc-valeur-dynamique accent-coords">- , -</div>
-                        </div>
+    <div class="sidebar-left">
+        <button class="btn-retour-bloc" style="height:50%;" onclick="retourAccueil()"><span>⬅️ Menu</span></button>
+        <button class="btn-recentrer-lateral" style="height:50%;" onclick="recentrerGpsAppPure()"><span>📍 Recentrer</span></button>
+    </div>
+    <div class="app-content-wrapper">
+        <button id="btn-toggle-layer" onclick="toggleMapLayer()" style="position:absolute; top:10px; right:10px; z-index:5001; padding:8px; background:#333; color:white; border:none; border-radius:4px; font-size:12px; cursor:pointer;">Plan / Satellite</button>
+        
+        <div class="wrapper-split-loc">
+            <div id="map-localisation" class="map-canvas"></div>
+            <div id="panel-infos-loc">
+                <div class="loc-bloc-adresse">
+                    <div class="loc-ligne-info">
+                        <div class="loc-label-fixe">Statut GPS</div>
+                        <div id="txt-loc-status" style="font-size:14px; font-weight:bold; color:#9ca3af;">Recherche satellite...</div>
+                    </div>
+                    <div class="loc-ligne-info">
+                        <div class="loc-label-fixe">Commune / Code Postal</div>
+                        <div id="txt-loc-commune" class="loc-valeur-dynamique accent-commune">-</div>
+                    </div>
+                    <div class="loc-ligne-info">
+                        <div class="loc-label-fixe">Rue / Lieu-dit</div>
+                        <div id="txt-loc-rue" class="loc-valeur-dynamique accent-adresse">-</div>
+                    </div>
+                    <div class="loc-ligne-info">
+                        <div class="loc-label-fixe">Coordonnées Géographiques (WGS84)</div>
+                        <div id="txt-loc-coords" class="loc-valeur-dynamique accent-coords">- , -</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
@@ -730,7 +732,22 @@
 
 
         // ================= LOGIQUE APP 5 : LOCALISATION (CONTOUR CORRIGÉ) =================
-        const mapLocalisationPure = L.map('map-localisation', { zoomControl: false }).setView([44.89, -0.04], 13);
+       // --- LOGIQUE BASCULE PLAN/SATELLITE ---
+let estSatellite = false;
+const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+const satLayer = L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 });
+
+function toggleMapLayer() {
+    if (estSatellite) {
+        mapLocalisationPure.removeLayer(satLayer);
+        osmLayer.addTo(mapLocalisationPure);
+    } else {
+        mapLocalisationPure.removeLayer(osmLayer);
+        satLayer.addTo(mapLocalisationPure);
+    }
+    estSatellite = !estSatellite;
+} 
+        const mapLocalisationPure = L.map('map-localisation', { zoomControl: false, layers: [osmLayer] }).setView([44.89, -0.04], 13);
         L.control.zoom({ position: 'bottomleft' }).addTo(mapLocalisationPure);
         L.tileLayer(tuilesSatelliteUrl, { attribution: attributionEsri, maxZoom: 19 }).addTo(mapLocalisationPure);
 
